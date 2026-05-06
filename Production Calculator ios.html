@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Press Calc v3.7</title>
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Press Calc">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f7f9; --surface: #ffffff; --header-bg: #001f3f;
+      --text: #1a1a1a; --text-muted: #5d6d7e;
+      --orange: #ff6b00; --navy: #001f3f; --white: #ffffff;
+      --border: #d5dbe0; --input-bg: #ffffff;
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    [data-theme="dark"] {
+      --bg: #000000; --surface: #121212; --header-bg: #000000;
+      --text: #e1e8ed; --text-muted: #8fa3b0;
+      --orange: #ff8533; --navy: #3399ff; --white: #ffffff;
+      --border: #243447; --input-bg: #1a1a1a;
+      --shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body { 
+      background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; 
+      transition: var(--transition); padding-bottom: 120px; overflow-x: hidden;
+      -webkit-user-select: none; user-select: none; /* Prevents accidental highlighting */
+    }
+
+    input { -webkit-user-select: text; user-select: text; } /* Re-enable for fields */
+
+    .header {
+      background: var(--header-bg); color: var(--white);
+      display: flex; justify-content: space-between; align-items: center;
+      height: 80px; border-bottom: 4px solid var(--orange);
+      position: sticky; top: 0; z-index: 1000; padding: 0 15px;
+    }
+    .h-left-zone { display: flex; flex-direction: column; justify-content: center; height: 100%; cursor: pointer; }
+    .h-title { font-family: 'Barlow Condensed'; font-size: 18px; font-weight: 700; text-transform: uppercase; line-height: 1.1; margin-bottom: 4px; }
+    .h-lang-pill { 
+      display: inline-block; font-family: 'DM Mono'; font-size: 11px; 
+      color: var(--orange); border: 1px solid var(--orange); 
+      padding: 2px 8px; border-radius: 12px; font-weight: bold;
+      background: rgba(255, 107, 0, 0.1); width: fit-content;
+    }
+    .h-right-zone { display: flex; gap: 10px; }
+    .h-btn-sq { 
+      background: rgba(255,255,255,0.1); border: none; border-radius: 8px;
+      width: 44px; height: 44px; color: var(--white); font-size: 22px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: var(--transition);
+    }
+    .h-btn-sq:active { transform: scale(0.9); background: var(--orange); }
+
+    .tab-bar { 
+      display: grid; grid-template-columns: 1fr 1fr 1fr; 
+      background: var(--surface); border-top: 2px solid var(--border);
+      position: fixed; bottom: 0; width: 100%; z-index: 1000;
+      transition: transform 0.3s; padding-bottom: env(safe-area-inset-bottom);
+    }
+    .keyboard-active .tab-bar { transform: translateY(100%); }
+    .tab-btn { 
+      padding: 18px 5px; border: none; background: none; 
+      color: var(--text-muted); font-family: 'Barlow Condensed'; 
+      font-size: 13px; font-weight: 700; text-transform: uppercase; 
+      border-top: 4px solid transparent; transition: 0.2s;
+    }
+    .tab-btn.active { color: var(--orange); border-top-color: var(--orange); background: rgba(255,107,0,0.05); }
+    .tab-btn:active { transform: scale(0.95); }
+
+    .result-sticky-wrapper { 
+      position: sticky; top: 80px; z-index: 900; margin: 0 -20px 20px -20px;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    .result-card { 
+      background: var(--surface); border-bottom: 4px solid var(--orange);
+      padding: 20px 15px; text-align: center; box-shadow: var(--shadow);
+    }
+    .res-big { font-family: 'Barlow Condensed'; font-size: 48px; font-weight: 700; color: var(--orange); line-height: 1; }
+    .res-sub {
+      color: var(--navy); font-size: 26px; font-weight: 700; font-family: 'Barlow Condensed';
+      margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255, 107, 0, 0.2); display: block;
+    }
+
+    .panel { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
+    .panel.active { display: block; }
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-family: 'Barlow Condensed'; font-size: 16px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+    
+    input { 
+      width: 100%; padding: 14px; background: var(--input-bg); 
+      border: 2px solid var(--border); border-radius: 8px; 
+      color: var(--text); font-size: 28px; font-weight: bold; outline: none; transition: 0.3s;
+    }
+    input:focus { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.15); animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 107, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0); } }
+
+    .cav-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 5px; }
+    .cav-btn { background: var(--input-bg); border: 2px solid var(--border); border-radius: 8px; padding: 12px; font-family: 'Barlow Condensed'; font-size: 22px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+    .cav-btn.active { border-color: var(--orange); color: var(--orange); background: rgba(255, 107, 0, 0.1); }
+    .cav-btn:active { transform: scale(0.9); }
+
+    .prog-container {
+      height: 28px; background: var(--border); border-radius: 14px;
+      overflow: hidden; margin-bottom: 12px; position: relative;
+    }
+    .prog-bar {
+      height: 100%; display: flex; align-items: center; justify-content: center;
+      transition: 1s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(90deg, var(--orange) 0%, #ffc091 50%, var(--orange) 100%);
+      background-size: 200% 100%; animation: shimmer 3s infinite linear;
+    }
+    .prog-label {
+      font-family: 'Barlow Condensed'; font-size: 14px; font-weight: 800;
+      color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+      z-index: 2; position: absolute; width: 100%; left: 0; pointer-events: none;
+      display: flex; align-items: center; justify-content: center; height: 100%;
+    }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <header class="header">
+    <div class="h-left-zone" onclick="toggleLang()">
+      <div class="h-title"><span id="txt-prod">PRODUCTION</span> <span id="txt-calc">CALC</span></div>
+      <div id="lang-btn" class="h-lang-pill">ESPAÑOL</div>
+    </div>
+    <div class="h-right-zone">
+      <button class="h-btn-sq" onclick="clearAll()" title="Reset">↻</button>
+      <button class="h-btn-sq" onclick="toggleTheme()" id="theme-btn">☀️</button>
+    </div>
+  </header>
+
+  <div class="tab-bar" id="bottom-tabs">
+    <button class="tab-btn active" id="tab-1" onclick="showTab('rate', this)">PARTS/HOUR</button>
+    <button class="tab-btn" id="tab-2" onclick="showTab('change', this)">MOLD CHANGE TIME</button>
+    <button class="tab-btn" id="tab-3" onclick="showTab('box', this)">FINISH BOXES/RACKS</button>
+  </div>
+
+  <div id="rate" class="panel active">
+    <div id="r-sticky" class="result-sticky-wrapper"></div>
+    <div class="field"><label id="lbl-cycle-r">Cycle Time (Sec)</label><input type="number" id="r-cycle" oninput="calcRate()"></div>
+    <div class="field">
+      <label id="lbl-cav-r">Cavity Count</label>
+      <div class="cav-grid" id="grid-r">
+        <button class="cav-btn active" onclick="setCav('r', 1, this)">1</button>
+        <button class="cav-btn" onclick="setCav('r', 2, this)">2</button>
+        <button class="cav-btn" onclick="setCav('r', 3, this)">3</button>
+        <button class="cav-btn" onclick="setCav('r', 4, this)">4</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="change" class="panel">
+    <div id="c-sticky" class="result-sticky-wrapper"></div>
+    <div class="field"><label id="lbl-target">Target Parts</label><input type="number" id="c-target" oninput="calcChange()"></div>
+    <div class="field"><label id="lbl-count">Current Count</label><input type="number" id="c-count" oninput="calcChange()"></div>
+    <div class="field"><label id="lbl-scrap">Scrap</label><input type="number" id="c-scrap" oninput="calcChange()"></div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <div class="field"><label id="lbl-cycle-c">Cycle</label><input type="number" id="c-cycle" oninput="clearPeer('c', 'cycle'); calcChange();"></div>
+      <div class="field"><label id="lbl-pph-c">PARTS/HOUR</label><input type="number" id="c-pph" oninput="clearPeer('c', 'pph'); calcChange();"></div>
+    </div>
+    <div class="field">
+      <label id="lbl-cav-c">Cavity Count</label>
+      <div class="cav-grid" id="grid-c">
+        <button class="cav-btn active" onclick="setCav('c', 1, this)">1</button>
+        <button class="cav-btn" onclick="setCav('c', 2, this)">2</button>
+        <button class="cav-btn" onclick="setCav('c', 3, this)">3</button>
+        <button class="cav-btn" onclick="setCav('c', 4, this)">4</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="box" class="panel">
+    <div id="b-sticky" class="result-sticky-wrapper"></div>
+    <div class="field"><label id="lbl-boxes">Number of Boxes</label><input type="number" id="b-boxes" oninput="calcBox()"></div>
+    <div class="field"><label id="lbl-per">Parts Per Box</label><input type="number" id="b-per" oninput="calcBox()"></div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+      <div class="field"><label id="lbl-cycle-b">Cycle</label><input type="number" id="b-cycle" oninput="clearPeer('b', 'cycle'); calcBox();"></div>
+      <div class="field"><label id="lbl-pph-b">PARTS/HOUR</label><input type="number" id="b-pph" oninput="clearPeer('b', 'pph'); calcBox();"></div>
+    </div>
+    <div class="field">
+      <label id="lbl-cav-b">Cavity Count</label>
+      <div class="cav-grid" id="grid-b">
+        <button class="cav-btn active" onclick="setCav('b', 1, this)">1</button>
+        <button class="cav-btn" onclick="setCav('b', 2, this)">2</button>
+        <button class="cav-btn" onclick="setCav('b', 3, this)">3</button>
+        <button class="cav-btn" onclick="setCav('b', 4, this)">4</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let cavs = { r: 1, c: 1, b: 1 };
+    let currentLang = 'en';
+
+    const lang = {
+      en: { prod: "PRODUCTION", calc: "CALC", tab1: "PARTS/HOUR", tab2: "MOLD CHANGE TIME", tab3: "FINISH BOXES/RACKS", cycle: "Cycle Time (Sec)", cav: "Cavity Count", pph: "Parts Per Hour", target: "Target Parts", count: "Current Count", scrap: "Scrap", boxes: "Number of Boxes", per: "Parts/Box", finish: "FINISH" },
+      es: { prod: "PRODUCCIÓN", calc: "CALC", tab1: "PIEZAS/HORA", tab2: "CAMBIO DE MOLDE", tab3: "CAJAS/RACKS", cycle: "Ciclo (Seg)", cav: "Cavidades", pph: "Piezas/Hora", target: "Meta de Piezas", count: "Conteo Actual", scrap: "Desperdicio", boxes: "Número de Cajas", per: "Piezas/Caja", finish: "TERMINA" }
+    };
+
+    window.addEventListener('resize', () => {
+      if (window.innerHeight < 550) document.body.classList.add('keyboard-active');
+      else document.body.classList.remove('keyboard-active');
+    });
+
+    function toggleLang() {
+      currentLang = currentLang === 'en' ? 'es' : 'en';
+      const l = lang[currentLang];
+      document.getElementById('txt-prod').innerText = l.prod;
+      document.getElementById('txt-calc').innerText = l.calc;
+      document.getElementById('lang-btn').innerText = currentLang === 'en' ? 'ESPAÑOL' : 'ENGLISH';
+      document.getElementById('tab-1').innerText = l.tab1;
+      document.getElementById('tab-2').innerText = l.tab2;
+      document.getElementById('tab-3').innerText = l.tab3;
+      document.getElementById('lbl-cycle-r').innerText = l.cycle;
+      document.getElementById('lbl-cycle-c').innerText = l.cycle;
+      document.getElementById('lbl-cycle-b').innerText = l.cycle;
+      document.getElementById('lbl-cav-r').innerText = l.cav;
+      document.getElementById('lbl-cav-c').innerText = l.cav;
+      document.getElementById('lbl-cav-b').innerText = l.cav;
+      document.getElementById('lbl-pph-c').innerText = l.pph;
+      document.getElementById('lbl-pph-b').innerText = l.pph;
+      document.getElementById('lbl-scrap').innerText = l.scrap;
+      document.getElementById('lbl-target').innerText = l.target;
+      document.getElementById('lbl-count').innerText = l.count;
+      document.getElementById('lbl-boxes').innerText = l.boxes;
+      document.getElementById('lbl-per').innerText = l.per;
+      calcRate(); calcChange(); calcBox();
+    }
+
+    function clearAll() {
+      document.querySelectorAll('input').forEach(i => i.value = '');
+      cavs = { r: 1, c: 1, b: 1 };
+      document.querySelectorAll('.cav-grid').forEach(grid => {
+        grid.querySelectorAll('.cav-btn').forEach((b, idx) => {
+          idx === 0 ? b.classList.add('active') : b.classList.remove('active');
+        });
+      });
+      document.getElementById('r-sticky').innerHTML = '';
+      document.getElementById('c-sticky').innerHTML = '';
+      document.getElementById('b-sticky').innerHTML = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showTab(id, btn) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      btn.classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    function setCav(prefix, n, btn) {
+      cavs[prefix] = n;
+      btn.parentElement.querySelectorAll('.cav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (prefix === 'r') calcRate(); if (prefix === 'c') calcChange(); if (prefix === 'b') calcBox();
+    }
+
+    function clearPeer(prefix, type) {
+      document.getElementById(prefix + (type === 'cycle' ? '-pph' : '-cycle')).value = '';
+    }
+
+    function toggleTheme() {
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+      document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      document.getElementById('theme-btn').innerText = isDark ? '🌙' : '☀️';
+    }
+
+    function calcRate() {
+      const cyc = parseFloat(document.getElementById('r-cycle').value);
+      const sticky = document.getElementById('r-sticky');
+      if (!cyc) { sticky.innerHTML = ''; return; }
+      const pph = Math.round((3600 / cyc) * cavs.r);
+      sticky.innerHTML = `<div class="result-card"><div class="res-big">${pph.toLocaleString()}</div><div class="res-sub">${lang[currentLang].pph}</div></div>`;
+    }
+
+    function calcChange() {
+      const target = parseFloat(document.getElementById('c-target').value) || 0;
+      const count = parseFloat(document.getElementById('c-count').value) || 0;
+      const scrap = parseFloat(document.getElementById('c-scrap').value) || 0;
+      const cyc = parseFloat(document.getElementById('c-cycle').value);
+      const pph = parseFloat(document.getElementById('c-pph').value);
+      const sticky = document.getElementById('c-sticky');
+      if (target <= 0 || (!cyc && !pph)) { sticky.innerHTML = ''; return; }
+      const needed = (target - count) + scrap;
+      const perc = Math.min(100, Math.max(0, Math.round((count / target) * 100)));
+      let secs = needed > 0 ? (cyc ? (Math.ceil(needed / cavs.c) * cyc) : ((needed / pph) * 3600)) : 0;
+      const finish = new Date(Date.now() + secs * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      sticky.innerHTML = `
+        <div class="result-card">
+          <div class="prog-container">
+            <div class="prog-bar" style="width:${perc}%"></div>
+            <span class="prog-label">${perc}%</span>
+          </div>
+          <div class="res-big">${needed <= 0 ? 'DONE' : Math.floor(secs / 3600) + 'h ' + Math.floor((secs % 3600) / 60) + 'm'}</div>
+          <div class="res-sub">${lang[currentLang].finish}: ${finish}</div>
+        </div>`;
+    }
+
+    function calcBox() {
+      const total = (parseFloat(document.getElementById('b-boxes').value) || 0) * (parseFloat(document.getElementById('b-per').value) || 0);
+      const cyc = parseFloat(document.getElementById('b-cycle').value), pph = parseFloat(document.getElementById('b-pph').value);
+      const sticky = document.getElementById('b-sticky');
+      if (total <= 0 || (!cyc && !pph)) { sticky.innerHTML = ''; return; }
+      let secs = cyc ? (Math.ceil(total / cavs.b) * cyc) : ((total / pph) * 3600);
+      const finish = new Date(Date.now() + secs * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      sticky.innerHTML = `<div class="result-card"><div class="res-big">${Math.floor(secs / 3600)}h ${Math.floor((secs % 3600) / 60)}m</div><div class="res-sub">${lang[currentLang].finish}: ${finish}</div></div>`;
+    }
+
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') input.blur();
+      });
+    });
+  </script>
+</body>
+</html>
