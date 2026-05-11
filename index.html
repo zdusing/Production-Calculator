@@ -2,13 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Press Calc v3.7</title>
-  
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Press Calc">
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Production Calculator 0.8</title>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Mono&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -17,7 +12,8 @@
       --orange: #ff6b00; --navy: #001f3f; --white: #ffffff;
       --border: #d5dbe0; --input-bg: #ffffff;
       --shadow: 0 10px 30px rgba(0,0,0,0.08);
-      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+      --green: #00c853;
     }
     [data-theme="dark"] {
       --bg: #000000; --surface: #121212; --header-bg: #000000;
@@ -25,110 +21,614 @@
       --orange: #ff8533; --navy: #3399ff; --white: #ffffff;
       --border: #243447; --input-bg: #1a1a1a;
       --shadow: 0 10px 30px rgba(0,0,0,0.5);
+      --green: #00e676;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    
-    body { 
-      background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; 
-      transition: var(--transition); padding-bottom: 120px; overflow-x: hidden;
-      -webkit-user-select: none; user-select: none; /* Prevents accidental highlighting */
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'DM Mono', monospace;
+      transition: background .2s, color .2s;
+      padding-bottom: 120px; overflow-x: hidden;
     }
 
-    input { -webkit-user-select: text; user-select: text; } /* Re-enable for fields */
-
+    /* HEADER */
     .header {
       background: var(--header-bg); color: var(--white);
       display: flex; justify-content: space-between; align-items: center;
       height: 80px; border-bottom: 4px solid var(--orange);
       position: sticky; top: 0; z-index: 1000; padding: 0 15px;
     }
-    .h-left-zone { display: flex; flex-direction: column; justify-content: center; height: 100%; cursor: pointer; }
-    .h-title { font-family: 'Barlow Condensed'; font-size: 18px; font-weight: 700; text-transform: uppercase; line-height: 1.1; margin-bottom: 4px; }
-    .h-lang-pill { 
-      display: inline-block; font-family: 'DM Mono'; font-size: 11px; 
-      color: var(--orange); border: 1px solid var(--orange); 
-      padding: 2px 8px; border-radius: 12px; font-weight: bold;
-      background: rgba(255, 107, 0, 0.1); width: fit-content;
+    .h-left-zone {
+      display: flex; flex-direction: column; justify-content: center;
+      height: 100%; cursor: pointer; user-select: none;
     }
-    .h-right-zone { display: flex; gap: 10px; }
-    .h-btn-sq { 
-      background: rgba(255,255,255,0.1); border: none; border-radius: 8px;
-      width: 44px; height: 44px; color: var(--white); font-size: 22px;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      transition: var(--transition);
+    .h-title { font-family:'Barlow Condensed'; font-size:18px; font-weight:700; text-transform:uppercase; line-height:1.1; margin-bottom:4px; }
+    .h-lang-pill {
+      display:inline-block; font-family:'DM Mono'; font-size:11px;
+      color:var(--orange); border:1px solid var(--orange);
+      padding:2px 8px; border-radius:12px; font-weight:bold;
+      background:rgba(255,107,0,0.1); width:fit-content;
     }
-    .h-btn-sq:active { transform: scale(0.9); background: var(--orange); }
+    .h-right-zone { display:flex; gap:10px; }
+    .h-btn-sq {
+      background:rgba(255,255,255,0.1); border:none; border-radius:8px;
+      width:44px; height:44px; color:var(--white); font-size:22px;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; transition:var(--transition);
+    }
+    .h-btn-sq:active { transform:scale(0.9); background:var(--orange); }
 
-    .tab-bar { 
-      display: grid; grid-template-columns: 1fr 1fr 1fr; 
-      background: var(--surface); border-top: 2px solid var(--border);
-      position: fixed; bottom: 0; width: 100%; z-index: 1000;
-      transition: transform 0.3s; padding-bottom: env(safe-area-inset-bottom);
+    /* TAB BAR */
+    .tab-bar {
+      display:grid; grid-template-columns:1fr 1fr 1fr 1fr;
+      background:var(--surface); border-top:2px solid var(--border);
+      position:fixed; bottom:0; width:100%; z-index:1000;
+      transition:transform .3s; padding-bottom:env(safe-area-inset-bottom);
     }
-    .keyboard-active .tab-bar { transform: translateY(100%); }
-    .tab-btn { 
-      padding: 18px 5px; border: none; background: none; 
-      color: var(--text-muted); font-family: 'Barlow Condensed'; 
-      font-size: 13px; font-weight: 700; text-transform: uppercase; 
-      border-top: 4px solid transparent; transition: 0.2s;
+    .keyboard-active .tab-bar { transform:translateY(100%); }
+    .tab-btn {
+      padding:16px 4px 14px; border:none; background:none;
+      color:var(--text-muted); font-family:'Barlow Condensed';
+      font-size:15px; font-weight:700; text-transform:uppercase;
+      border-top:4px solid transparent; transition:.2s;
+      cursor:pointer; position:relative; line-height:1.15;
+      letter-spacing:.5px;
     }
-    .tab-btn.active { color: var(--orange); border-top-color: var(--orange); background: rgba(255,107,0,0.05); }
-    .tab-btn:active { transform: scale(0.95); }
+    .tab-btn.active { color:var(--orange); border-top-color:var(--orange); background:rgba(255,107,0,0.05); }
+    .tab-badge {
+      position:absolute; top:6px; right:calc(50% - 26px);
+      background:var(--orange); color:white; font-size:10px;
+      font-family:'DM Mono'; font-weight:bold;
+      padding:0 5px; height:16px; line-height:16px;
+      border-radius:8px; min-width:16px; text-align:center;
+    }
+    .tab-badge.alert { animation:badge-pulse .5s ease infinite alternate; }
+    @keyframes badge-pulse {
+      from { background:var(--orange); }
+      to { background:#e00; transform:scale(1.15); }
+    }
 
-    .result-sticky-wrapper { 
-      position: sticky; top: 80px; z-index: 900; margin: 0 -20px 20px -20px;
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    /* RESULT STICKY */
+    .result-sticky-wrapper {
+      position:sticky; top:80px; z-index:900;
+      margin:0 -20px 20px -20px;
     }
-    .result-card { 
-      background: var(--surface); border-bottom: 4px solid var(--orange);
-      padding: 20px 15px; text-align: center; box-shadow: var(--shadow);
+    .result-card {
+      background:var(--surface); border-bottom:4px solid var(--orange);
+      padding:18px 15px 14px; text-align:center; box-shadow:var(--shadow);
     }
-    .res-big { font-family: 'Barlow Condensed'; font-size: 48px; font-weight: 700; color: var(--orange); line-height: 1; }
+    .res-big { font-family:'Barlow Condensed'; font-size:48px; font-weight:700; color:var(--orange); line-height:1; }
     .res-sub {
-      color: var(--navy); font-size: 26px; font-weight: 700; font-family: 'Barlow Condensed';
-      margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255, 107, 0, 0.2); display: block;
+      color:var(--navy); font-size:24px; font-weight:700;
+      font-family:'Barlow Condensed'; margin-top:10px; padding-top:8px;
+      border-top:1px solid rgba(255,107,0,0.2); display:block;
     }
-
-    .panel { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
-    .panel.active { display: block; }
-    .field { margin-bottom: 18px; }
-    .field label { display: block; font-family: 'Barlow Condensed'; font-size: 16px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
-    
-    input { 
-      width: 100%; padding: 14px; background: var(--input-bg); 
-      border: 2px solid var(--border); border-radius: 8px; 
-      color: var(--text); font-size: 28px; font-weight: bold; outline: none; transition: 0.3s;
+    .set-timer-btn {
+      display:block; width:100%; margin-top:12px;
+      padding:10px 16px; background:transparent;
+      border:2px solid var(--orange); border-radius:8px;
+      color:var(--orange); font-family:'Barlow Condensed';
+      font-size:17px; font-weight:700; text-transform:uppercase;
+      cursor:pointer; letter-spacing:.5px; transition:var(--transition);
     }
-    input:focus { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.15); animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 107, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0); } }
+    .set-timer-btn:active { background:var(--orange); color:white; transform:scale(.98); }
 
-    .cav-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 5px; }
-    .cav-btn { background: var(--input-bg); border: 2px solid var(--border); border-radius: 8px; padding: 12px; font-family: 'Barlow Condensed'; font-size: 22px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
-    .cav-btn.active { border-color: var(--orange); color: var(--orange); background: rgba(255, 107, 0, 0.1); }
-    .cav-btn:active { transform: scale(0.9); }
+    /* TOAST */
+    .toast {
+      position:fixed; bottom:88px; left:50%;
+      transform:translateX(-50%) translateY(20px);
+      background:var(--orange); color:white;
+      font-family:'Barlow Condensed'; font-size:17px; font-weight:700;
+      padding:10px 22px; border-radius:24px; z-index:2000;
+      opacity:0; transition:opacity .25s,transform .25s;
+      white-space:nowrap; pointer-events:none;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
+    /* PANELS */
+    .panel { display:none; padding:20px; max-width:600px; margin:0 auto; }
+    .panel.active { display:block; }
+
+    /* MACHINE LABEL */
+    .machine-field { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .machine-field label {
+      font-family:'Barlow Condensed'; font-size:14px; font-weight:700;
+      color:var(--text-muted); text-transform:uppercase;
+      white-space:nowrap; flex-shrink:0;
+    }
+    .machine-field input {
+      flex:1; padding:8px 12px;
+      background:var(--input-bg); border:2px solid var(--border);
+      border-radius:8px; color:var(--text);
+      font-family:'DM Mono',monospace; font-size:16px; outline:none; transition:.2s;
+      width:auto;
+    }
+    .machine-field input:focus { border-color:var(--orange); }
+
+    /* FIELDS */
+    .field { margin-bottom:18px; }
+    .field label {
+      display:block; font-family:'Barlow Condensed'; font-size:16px;
+      font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;
+    }
+    input[type="number"] {
+      width:100%; padding:14px; background:var(--input-bg);
+      border:2px solid var(--border); border-radius:8px;
+      color:var(--text); font-size:28px; font-weight:bold;
+      outline:none; transition:.3s; font-family:'DM Mono',monospace;
+    }
+    input[type="number"]:focus { border-color:var(--orange); box-shadow:0 0 0 4px rgba(255,107,0,0.12); }
+
+    /* CAVITY GRID — 1,2,3,4 + custom */
+    .cav-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-top:5px; }
+    .cav-btn {
+      background:var(--input-bg); border:2px solid var(--border);
+      border-radius:8px; padding:12px 2px;
+      font-family:'Barlow Condensed'; font-size:20px; font-weight:700;
+      color:var(--text-muted); cursor:pointer; transition:.15s;
+    }
+    .cav-btn.active { border-color:var(--orange); color:var(--orange); background:rgba(255,107,0,0.1); }
+    .cav-btn:active { transform:scale(.93); }
+    /* Custom button: dashed border to signal "tap to set" when empty */
+    .cav-btn-custom { border-style:dashed; }
+    .cav-btn-custom.has-value { border-style:solid; }
+
+    /* PROGRESS BAR */
     .prog-container {
-      height: 28px; background: var(--border); border-radius: 14px;
-      overflow: hidden; margin-bottom: 12px; position: relative;
+      height:28px; background:var(--border); border-radius:14px;
+      overflow:hidden; margin-bottom:12px; position:relative;
     }
     .prog-bar {
-      height: 100%; display: flex; align-items: center; justify-content: center;
-      transition: 1s cubic-bezier(0.4, 0, 0.2, 1);
-      background: linear-gradient(90deg, var(--orange) 0%, #ffc091 50%, var(--orange) 100%);
-      background-size: 200% 100%; animation: shimmer 3s infinite linear;
+      height:100%; transition:width .8s cubic-bezier(.4,0,.2,1);
+      background:linear-gradient(90deg,var(--orange) 0%,#ffc091 50%,var(--orange) 100%);
+      background-size:200% 100%; animation:shimmer 3s infinite linear;
     }
+    /* Always-readable % label sits above bar using mix-blend-mode */
     .prog-label {
-      font-family: 'Barlow Condensed'; font-size: 14px; font-weight: 800;
-      color: #ffffff; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-      z-index: 2; position: absolute; width: 100%; left: 0; pointer-events: none;
-      display: flex; align-items: center; justify-content: center; height: 100%;
+      font-family:'Barlow Condensed'; font-size:14px; font-weight:800;
+      color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.8);
+      position:absolute; width:100%; top:50%; left:0;
+      transform:translateY(-50%); text-align:center; pointer-events:none; z-index:2;
     }
-    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+
+    /* TWO COLUMNS */
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+    /* TIMERS PANEL */
+    .timers-header {
+      font-family:'Barlow Condensed'; font-size:14px; font-weight:700;
+      color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px;
+    }
+    .notif-banner {
+      background:rgba(255,107,0,0.08); border:2px solid var(--orange);
+      border-radius:10px; padding:14px; margin-bottom:16px;
+      font-size:13px; line-height:1.55; color:var(--text-muted);
+    }
+    .notif-banner strong { display:block; font-family:'Barlow Condensed'; font-size:17px; color:var(--orange); margin-bottom:5px; }
+    .notif-enable-btn {
+      display:block; width:100%; margin-top:10px; padding:10px;
+      background:var(--orange); border:none; border-radius:8px;
+      color:white; font-family:'Barlow Condensed'; font-size:17px;
+      font-weight:700; text-transform:uppercase; cursor:pointer;
+    }
+    .notif-denied { font-family:'Barlow Condensed'; font-size:14px; color:var(--text-muted); padding-top:8px; }
+    .empty-timers {
+      text-align:center; color:var(--text-muted);
+      font-family:'Barlow Condensed'; font-size:18px; padding:40px 20px; line-height:1.7;
+    }
+    .timer-card {
+      background:var(--surface); border:2px solid var(--border);
+      border-radius:12px; padding:16px 46px 16px 16px;
+      margin-bottom:12px; position:relative; transition:border-color .3s;
+    }
+    .timer-card.done { border-color:var(--green); background:rgba(0,200,83,0.04); }
+    .timer-card.firing { animation:card-flash .4s ease infinite alternate; }
+    @keyframes card-flash {
+      from { border-color:var(--orange); }
+      to { border-color:#e00; box-shadow:0 0 16px rgba(220,0,0,.25); }
+    }
+    .tc-label {
+      font-family:'Barlow Condensed'; font-size:15px; font-weight:700;
+      color:var(--text-muted); text-transform:uppercase; margin-bottom:4px; letter-spacing:.5px;
+    }
+    .tc-countdown { font-family:'Barlow Condensed'; font-size:40px; font-weight:700; color:var(--orange); line-height:1; }
+    .timer-card.done .tc-countdown { color:var(--green); font-size:30px; }
+    .tc-at { font-size:12px; color:var(--text-muted); margin-top:5px; }
+    .tc-dismiss {
+      position:absolute; top:12px; right:12px;
+      background:var(--border); border:none; border-radius:50%;
+      width:30px; height:30px; font-size:14px; cursor:pointer;
+      color:var(--text-muted); display:flex; align-items:center;
+      justify-content:center; transition:.15s;
+    }
+    .tc-dismiss:active { background:#e00; color:white; transform:scale(.9); }
+    .clear-timers-btn {
+      display:none; width:100%; padding:12px; margin-top:4px;
+      background:transparent; border:2px solid var(--border); border-radius:8px;
+      color:var(--text-muted); font-family:'Barlow Condensed'; font-size:15px;
+      font-weight:700; text-transform:uppercase; cursor:pointer; transition:.2s;
+    }
+    .clear-timers-btn:active { border-color:#e00; color:#e00; }
+
+    /* ── TAPPABLE TIMER CARD ── */
+    .timer-card { cursor: pointer; }
+    .timer-card .tc-body { padding-right: 0; }
+    .timer-card:active { transform: scale(0.99); }
+    .tc-tap-hint {
+      position:absolute; right:48px; top:50%; transform:translateY(-50%);
+      font-family:'Barlow Condensed'; font-size:11px;
+      color:var(--text-muted); opacity:.5;
+      letter-spacing:.5px; pointer-events:none;
+    }
+
+    /* Right-side stat snippet (below the X) */
+    .tc-stat {
+      position: absolute;
+      top: 50px; right: 12px;
+      text-align: right;
+      pointer-events: none;
+      max-width: 90px;
+    }
+    .tc-stat-label {
+      font-family: 'Barlow Condensed';
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .tc-stat-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--text);
+      line-height: 1.15;
+      margin-top: 2px;
+      white-space: nowrap;
+    }
+    .timer-card.done .tc-stat-value { color: var(--green); }
+    .timer-card.paused .tc-stat-value { color: var(--text-muted); }
+
+    /* Break indicator inline with finish time */
+    .tc-break {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 6px;
+      background: rgba(255,107,0,0.12);
+      color: var(--orange);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: bold;
+      border-radius: 3px;
+    }
+
+    /* Need more right padding when stat present */
+    .timer-card.has-stat { padding-right: 100px; }
+
+    /* ── FULL-SCREEN MODAL (TIMER DETAIL) ── */
+    .modal-fs {
+      position: fixed; inset: 0; z-index: 5000;
+      background: var(--bg); color: var(--text);
+      display: none; flex-direction: column;
+      overflow-y: auto;
+      animation: modal-in .25s ease-out;
+    }
+    .modal-fs.show { display: flex; }
+    @keyframes modal-in {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-header {
+      display:flex; justify-content:flex-end; align-items:center;
+      padding: 12px 15px; height: 60px;
+      background: var(--header-bg); border-bottom: 4px solid var(--orange);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .modal-header-title {
+      flex: 1; font-family: 'Barlow Condensed';
+      font-size: 18px; font-weight: 700;
+      text-transform: uppercase; color: var(--white);
+      letter-spacing: 0.5px;
+    }
+    .modal-close {
+      background: rgba(255,255,255,0.1); border: none; border-radius: 8px;
+      width: 44px; height: 44px; color: var(--white);
+      font-size: 22px; cursor: pointer; transition: var(--transition);
+    }
+    .modal-close:active { transform: scale(0.9); background: var(--orange); }
+
+    .modal-body { padding: 24px 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+
+    .tm-label {
+      font-family:'Barlow Condensed'; font-size: 18px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 8px;
+    }
+    .tm-countdown {
+      font-family:'Barlow Condensed'; font-size: 76px; font-weight: 700;
+      color: var(--orange); line-height: 0.95;
+    }
+    .tm-countdown.done { color: var(--green); font-size: 56px; }
+    .tm-finish {
+      font-family:'Barlow Condensed'; font-size: 22px; font-weight: 700;
+      color: var(--navy); margin-top: 6px;
+    }
+    .tm-progress { margin-top: 18px; }
+
+    .tm-stats {
+      margin-top: 24px; padding-top: 20px;
+      border-top: 2px dashed var(--border);
+    }
+    .tm-stats-title {
+      font-family:'Barlow Condensed'; font-size: 13px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 1.5px; margin-bottom: 14px;
+    }
+    .tm-stat-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .tm-stat-row:last-child { border-bottom: none; }
+    .tm-stat-label {
+      font-family:'Barlow Condensed'; font-size: 16px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase;
+    }
+    .tm-stat-value {
+      font-family:'DM Mono', monospace; font-size: 22px; font-weight: bold;
+      color: var(--text);
+    }
+    .tm-stat-value.accent { color: var(--orange); }
+
+    .tm-meta {
+      margin-top: 18px; padding-top: 14px;
+      border-top: 1px solid var(--border);
+      font-family:'DM Mono', monospace; font-size: 13px;
+      color: var(--text-muted); line-height: 1.6;
+    }
+
+    .tm-actions {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-top: 28px;
+    }
+    .tm-actions.full { grid-template-columns: 1fr; }
+    .tm-btn {
+      padding: 14px 10px;
+      background: transparent; border: 2px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      font-family:'Barlow Condensed'; font-size: 16px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      cursor: pointer; transition: var(--transition);
+    }
+    .tm-btn:active { transform: scale(0.97); }
+    .tm-btn.primary { border-color: var(--orange); color: var(--orange); }
+    .tm-btn.primary:active { background: var(--orange); color: white; }
+    .tm-btn.danger { border-color: #e00; color: #e00; }
+    .tm-btn.danger:active { background: #e00; color: white; }
+    .tm-btn.success { border-color: var(--green); color: var(--green); }
+    .tm-btn.success:active { background: var(--green); color: white; }
+
+    /* ── EDIT MODE ── */
+    .tm-edit-section { margin-top: 12px; }
+    .tm-edit-section .field { margin-bottom: 14px; }
+    .tm-edit-section input[type="number"] {
+      font-size: 22px; padding: 12px;
+    }
+    .tm-edit-section .cav-grid { margin-top: 5px; }
+
+    /* ── SHARE / SCREENSHOT VIEW ── */
+    .share-fs {
+      position: fixed; inset: 0; z-index: 6000;
+      background: var(--bg);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: pointer;
+      padding: 20px;
+      animation: modal-in .25s ease-out;
+    }
+    .share-fs.show { display: flex; }
+    .share-card {
+      width: 100%; max-width: 480px;
+      background: var(--surface);
+      border: 3px solid var(--orange);
+      border-radius: 16px;
+      padding: 26px 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+      position: relative;
+    }
+    .share-corner-tag {
+      position: absolute; top: -2px; left: 24px;
+      background: var(--orange); color: white;
+      font-family: 'Barlow Condensed'; font-weight: 700;
+      font-size: 11px; letter-spacing: 1.5px;
+      padding: 5px 12px;
+      border-radius: 0 0 6px 6px;
+    }
+    .share-press {
+      font-family:'Barlow Condensed'; font-size: 16px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 1.5px; margin-top: 10px;
+    }
+    .share-op {
+      font-family:'Barlow Condensed'; font-size: 32px; font-weight: 700;
+      color: var(--text); text-transform: uppercase;
+      line-height: 1; margin-top: 4px;
+    }
+    .share-divider {
+      height: 1px; background: var(--border);
+      margin: 18px 0;
+    }
+    .share-countdown {
+      font-family:'Barlow Condensed'; font-size: 72px; font-weight: 700;
+      color: var(--orange); line-height: 0.95; text-align: center;
+    }
+    .share-countdown.done { color: var(--green); font-size: 50px; }
+    .share-finish {
+      text-align: center;
+      font-family:'Barlow Condensed'; font-size: 22px; font-weight: 700;
+      color: var(--navy); margin-top: 8px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+    }
+    .share-stats {
+      margin-top: 18px;
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .share-stat-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 8px 0;
+    }
+    .share-stat-row + .share-stat-row {
+      border-top: 1px dotted var(--border);
+    }
+    .share-stat-label {
+      font-family:'Barlow Condensed'; font-size: 14px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .share-stat-value {
+      font-family:'DM Mono', monospace; font-size: 19px; font-weight: bold;
+      color: var(--text);
+    }
+    .share-stat-value.big { font-size: 22px; color: var(--orange); }
+    .share-params {
+      margin-top: 14px; text-align: center;
+      font-family:'DM Mono', monospace; font-size: 13px;
+      color: var(--text-muted);
+    }
+    .share-footer {
+      margin-top: 18px; padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between;
+      font-family:'DM Mono', monospace; font-size: 11px;
+      color: var(--text-muted);
+    }
+    .share-tap-hint {
+      position: fixed; bottom: 30px; left: 0; right: 0;
+      text-align: center; font-family: 'Barlow Condensed';
+      font-size: 13px; font-weight: 700;
+      color: var(--text-muted); letter-spacing: 1px;
+      text-transform: uppercase; opacity: 0.7;
+      pointer-events: none;
+    }
+
+    /* ── PROGRESS BAR (small) ── */
+    .prog-sm {
+      height: 8px; background: var(--border);
+      border-radius: 4px; overflow: hidden;
+      margin-top: 6px;
+    }
+    .prog-sm-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--orange) 0%, #ffc091 50%, var(--orange) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 3s infinite linear;
+      transition: width 0.8s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── PAUSED STATE ── */
+    .timer-card.paused {
+      border-color: var(--text-muted);
+      background: repeating-linear-gradient(
+        45deg,
+        var(--surface),
+        var(--surface) 12px,
+        rgba(143,163,176,0.08) 12px,
+        rgba(143,163,176,0.08) 24px
+      );
+    }
+    .timer-card.paused .tc-countdown { color: var(--text-muted); }
+    .paused-badge {
+      display: inline-block;
+      background: var(--text-muted); color: var(--bg);
+      font-family:'Barlow Condensed'; font-size: 11px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px;
+      letter-spacing: 1px; margin-left: 6px;
+      vertical-align: middle;
+    }
+    .tm-countdown.paused-display { color: var(--text-muted); }
+    .prog-sm-bar.paused {
+      animation: none;
+      background: var(--text-muted);
+    }
+
+    /* Big pause/resume button (full width, prominent) */
+    .tm-pause-btn {
+      display: block; width: 100%;
+      padding: 16px; margin-top: 20px;
+      background: transparent;
+      border: 3px solid var(--orange);
+      border-radius: 10px;
+      color: var(--orange);
+      font-family:'Barlow Condensed'; font-size: 22px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      cursor: pointer; transition: var(--transition);
+    }
+    .tm-pause-btn:active { transform: scale(.98); background: var(--orange); color: white; }
+    .tm-pause-btn.resume {
+      border-color: var(--green); color: var(--green);
+    }
+    .tm-pause-btn.resume:active { background: var(--green); color: white; }
+
+    /* ── BREAK / LUNCH CHIPS IN EDIT ── */
+    .interruption-section {
+      margin-top: 8px; margin-bottom: 18px;
+      padding: 14px; background: rgba(143,163,176,0.06);
+      border-radius: 10px;
+    }
+    .interruption-title {
+      font-family:'Barlow Condensed'; font-size: 13px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 10px;
+    }
+    .interruption-chips {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .chip-btn {
+      padding: 12px 8px;
+      background: var(--input-bg); border: 2px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      font-family:'Barlow Condensed'; font-size: 15px; font-weight: 700;
+      text-transform: uppercase; cursor: pointer; transition: .15s;
+    }
+    .chip-btn:active { transform: scale(.95); border-color: var(--orange); color: var(--orange); }
+    .chip-btn.minus:active { border-color: #e00; color: #e00; }
+    .chip-btn:disabled {
+      opacity: 0.35; cursor: not-allowed;
+    }
+    .chip-btn:disabled:active { transform: none; border-color: var(--border); color: var(--text); }
+    .interruption-summary {
+      margin-top: 10px; text-align: center;
+      font-family:'DM Mono', monospace; font-size: 14px;
+      color: var(--orange); font-weight: bold;
+      min-height: 18px;
+    }
+
+    /* ── EDIT: Press # field should match number field styling ── */
+    .tm-edit-section input[type="number"],
+    .tm-edit-section input[type="text"] {
+      font-size: 22px; padding: 12px;
+      width: 100%;
+      background: var(--input-bg); border: 2px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      font-family:'DM Mono', monospace; font-weight: bold;
+      outline: none; transition: .3s;
+    }
+    .tm-edit-section input:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 4px rgba(255,107,0,0.12);
+    }
   </style>
 </head>
-<body data-theme="dark">
 
+<body data-theme="dark">
+  <div id="toast" class="toast"></div>
+
+  <!-- HEADER -->
   <header class="header">
     <div class="h-left-zone" onclick="toggleLang()">
       <div class="h-title"><span id="txt-prod">PRODUCTION</span> <span id="txt-calc">CALC</span></div>
@@ -140,190 +640,1148 @@
     </div>
   </header>
 
-  <div class="tab-bar" id="bottom-tabs">
-    <button class="tab-btn active" id="tab-1" onclick="showTab('rate', this)">PARTS/HOUR</button>
-    <button class="tab-btn" id="tab-2" onclick="showTab('change', this)">MOLD CHANGE TIME</button>
-    <button class="tab-btn" id="tab-3" onclick="showTab('box', this)">FINISH BOXES/RACKS</button>
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tab-1" onclick="showTab('rate',this)">PARTS/<br>HOUR</button>
+    <button class="tab-btn" id="tab-2" onclick="showTab('change',this)">RUN TO<br>TARGET</button>
+    <button class="tab-btn" id="tab-3" onclick="showTab('box',this)">FINISH<br>BOXES</button>
+    <button class="tab-btn" id="tab-4" onclick="showTab('timers',this)">
+      <span id="tab-badge" class="tab-badge" style="display:none">0</span>
+      TIMERS
+    </button>
   </div>
 
+  <!-- PANEL: PARTS/HOUR -->
   <div id="rate" class="panel active">
+    <div class="machine-field">
+      <label id="lbl-machine-r">Press #</label>
+      <input type="text" inputmode="numeric" pattern="[0-9]*" id="r-machine" placeholder="optional" oninput="saveAll()">
+    </div>
     <div id="r-sticky" class="result-sticky-wrapper"></div>
-    <div class="field"><label id="lbl-cycle-r">Cycle Time (Sec)</label><input type="number" id="r-cycle" oninput="calcRate()"></div>
+    <div class="field">
+      <label id="lbl-cycle-r">Cycle Time (Sec)</label>
+      <input type="number" id="r-cycle" inputmode="decimal" oninput="calcRate()">
+    </div>
     <div class="field">
       <label id="lbl-cav-r">Cavity Count</label>
       <div class="cav-grid" id="grid-r">
-        <button class="cav-btn active" onclick="setCav('r', 1, this)">1</button>
-        <button class="cav-btn" onclick="setCav('r', 2, this)">2</button>
-        <button class="cav-btn" onclick="setCav('r', 3, this)">3</button>
-        <button class="cav-btn" onclick="setCav('r', 4, this)">4</button>
+        <button class="cav-btn active" data-val="1" onclick="setCav('r',1,this)">1</button>
+        <button class="cav-btn" data-val="2" onclick="setCav('r',2,this)">2</button>
+        <button class="cav-btn" data-val="3" onclick="setCav('r',3,this)">3</button>
+        <button class="cav-btn" data-val="4" onclick="setCav('r',4,this)">4</button>
+        <button class="cav-btn cav-btn-custom" onclick="setCustomCav('r',this)">…</button>
       </div>
     </div>
   </div>
 
+  <!-- PANEL: RUN TO TARGET -->
   <div id="change" class="panel">
+    <div class="machine-field">
+      <label id="lbl-machine-c">Press #</label>
+      <input type="text" inputmode="numeric" pattern="[0-9]*" id="c-machine" placeholder="optional" oninput="saveAll()">
+    </div>
     <div id="c-sticky" class="result-sticky-wrapper"></div>
-    <div class="field"><label id="lbl-target">Target Parts</label><input type="number" id="c-target" oninput="calcChange()"></div>
-    <div class="field"><label id="lbl-count">Current Count</label><input type="number" id="c-count" oninput="calcChange()"></div>
-    <div class="field"><label id="lbl-scrap">Scrap</label><input type="number" id="c-scrap" oninput="calcChange()"></div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-      <div class="field"><label id="lbl-cycle-c">Cycle</label><input type="number" id="c-cycle" oninput="clearPeer('c', 'cycle'); calcChange();"></div>
-      <div class="field"><label id="lbl-pph-c">PARTS/HOUR</label><input type="number" id="c-pph" oninput="clearPeer('c', 'pph'); calcChange();"></div>
+    <div class="field"><label id="lbl-target">Target Parts</label><input type="number" id="c-target" inputmode="decimal" oninput="calcChange()"></div>
+    <div class="field"><label id="lbl-count">Current Count</label><input type="number" id="c-count" inputmode="decimal" oninput="calcChange()"></div>
+    <div class="field"><label id="lbl-scrap">Scrap</label><input type="number" id="c-scrap" inputmode="decimal" oninput="calcChange()"></div>
+    <div class="two-col">
+      <div class="field"><label id="lbl-cycle-c">Cycle (Sec)</label><input type="number" id="c-cycle" inputmode="decimal" oninput="clearPeer('c','cycle');calcChange()"></div>
+      <div class="field"><label id="lbl-pph-c">Parts / Hr</label><input type="number" id="c-pph" inputmode="decimal" oninput="clearPeer('c','pph');calcChange()"></div>
     </div>
     <div class="field">
       <label id="lbl-cav-c">Cavity Count</label>
       <div class="cav-grid" id="grid-c">
-        <button class="cav-btn active" onclick="setCav('c', 1, this)">1</button>
-        <button class="cav-btn" onclick="setCav('c', 2, this)">2</button>
-        <button class="cav-btn" onclick="setCav('c', 3, this)">3</button>
-        <button class="cav-btn" onclick="setCav('c', 4, this)">4</button>
+        <button class="cav-btn active" data-val="1" onclick="setCav('c',1,this)">1</button>
+        <button class="cav-btn" data-val="2" onclick="setCav('c',2,this)">2</button>
+        <button class="cav-btn" data-val="3" onclick="setCav('c',3,this)">3</button>
+        <button class="cav-btn" data-val="4" onclick="setCav('c',4,this)">4</button>
+        <button class="cav-btn cav-btn-custom" onclick="setCustomCav('c',this)">…</button>
       </div>
     </div>
   </div>
 
+  <!-- PANEL: FINISH BOXES -->
   <div id="box" class="panel">
+    <div class="machine-field">
+      <label id="lbl-machine-b">Press #</label>
+      <input type="text" inputmode="numeric" pattern="[0-9]*" id="b-machine" placeholder="optional" oninput="saveAll()">
+    </div>
     <div id="b-sticky" class="result-sticky-wrapper"></div>
-    <div class="field"><label id="lbl-boxes">Number of Boxes</label><input type="number" id="b-boxes" oninput="calcBox()"></div>
-    <div class="field"><label id="lbl-per">Parts Per Box</label><input type="number" id="b-per" oninput="calcBox()"></div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-      <div class="field"><label id="lbl-cycle-b">Cycle</label><input type="number" id="b-cycle" oninput="clearPeer('b', 'cycle'); calcBox();"></div>
-      <div class="field"><label id="lbl-pph-b">PARTS/HOUR</label><input type="number" id="b-pph" oninput="clearPeer('b', 'pph'); calcBox();"></div>
+    <div class="field"><label id="lbl-boxes">Number of Boxes</label><input type="number" id="b-boxes" inputmode="decimal" oninput="calcBox()"></div>
+    <div class="field"><label id="lbl-per">Parts Per Box</label><input type="number" id="b-per" inputmode="decimal" oninput="calcBox()"></div>
+    <div class="two-col">
+      <div class="field"><label id="lbl-cycle-b">Cycle (Sec)</label><input type="number" id="b-cycle" inputmode="decimal" oninput="clearPeer('b','cycle');calcBox()"></div>
+      <div class="field"><label id="lbl-pph-b">Parts / Hr</label><input type="number" id="b-pph" inputmode="decimal" oninput="clearPeer('b','pph');calcBox()"></div>
     </div>
     <div class="field">
       <label id="lbl-cav-b">Cavity Count</label>
       <div class="cav-grid" id="grid-b">
-        <button class="cav-btn active" onclick="setCav('b', 1, this)">1</button>
-        <button class="cav-btn" onclick="setCav('b', 2, this)">2</button>
-        <button class="cav-btn" onclick="setCav('b', 3, this)">3</button>
-        <button class="cav-btn" onclick="setCav('b', 4, this)">4</button>
+        <button class="cav-btn active" data-val="1" onclick="setCav('b',1,this)">1</button>
+        <button class="cav-btn" data-val="2" onclick="setCav('b',2,this)">2</button>
+        <button class="cav-btn" data-val="3" onclick="setCav('b',3,this)">3</button>
+        <button class="cav-btn" data-val="4" onclick="setCav('b',4,this)">4</button>
+        <button class="cav-btn cav-btn-custom" onclick="setCustomCav('b',this)">…</button>
       </div>
     </div>
   </div>
 
+  <!-- PANEL: TIMERS -->
+  <div id="timers" class="panel">
+    <div class="timers-header" id="lbl-timers-hdr">Saved Timers</div>
+    <div id="notif-banner" class="notif-banner" style="display:none">
+      <strong id="lbl-notif-title">Enable Notifications</strong>
+      <span id="lbl-notif-body">Allow browser notifications to get alerted when a timer finishes — even if you're on another tab.</span>
+      <button class="notif-enable-btn" id="notif-btn" onclick="requestNotifPermission()">Enable Notifications</button>
+    </div>
+    <div id="timers-list"></div>
+    <button class="clear-timers-btn" id="clear-timers-btn" onclick="clearAllTimers()">Clear All Timers</button>
+  </div>
+
+  <!-- TIMER DETAIL MODAL -->
+  <div id="timer-modal" class="modal-fs">
+    <div class="modal-header">
+      <div class="modal-header-title" id="tm-header-title">Timer</div>
+      <button class="modal-close" onclick="closeTimerModal()">✕</button>
+    </div>
+    <div class="modal-body" id="tm-body"></div>
+  </div>
+
+  <!-- SHARE / SCREENSHOT VIEW -->
+  <div id="share-modal" class="share-fs" onclick="closeShareView()">
+    <div class="share-card" id="share-card-content"></div>
+    <div class="share-tap-hint" id="share-tap-hint">tap to dismiss</div>
+  </div>
+
   <script>
-    let cavs = { r: 1, c: 1, b: 1 };
+    // ── STATE ──
+    let cavs = { r:1, c:1, b:1 };
+    let customCavs = { r:null, c:null, b:null };
     let currentLang = 'en';
+    let savedTimers = [];
+    let activeTimerId = null;       // ID of timer shown in detail modal
+    let editMode = false;           // is detail modal in edit mode?
+    let editDraft = null;           // working copy during edit
+    let shareTimerId = null;        // ID of timer shown in share view
 
-    const lang = {
-      en: { prod: "PRODUCTION", calc: "CALC", tab1: "PARTS/HOUR", tab2: "MOLD CHANGE TIME", tab3: "FINISH BOXES/RACKS", cycle: "Cycle Time (Sec)", cav: "Cavity Count", pph: "Parts Per Hour", target: "Target Parts", count: "Current Count", scrap: "Scrap", boxes: "Number of Boxes", per: "Parts/Box", finish: "FINISH" },
-      es: { prod: "PRODUCCIÓN", calc: "CALC", tab1: "PIEZAS/HORA", tab2: "CAMBIO DE MOLDE", tab3: "CAJAS/RACKS", cycle: "Ciclo (Seg)", cav: "Cavidades", pph: "Piezas/Hora", target: "Meta de Piezas", count: "Conteo Actual", scrap: "Desperdicio", boxes: "Número de Cajas", per: "Piezas/Caja", finish: "TERMINA" }
+    // ── LANGUAGE STRINGS ──
+    const LANG = {
+      en: {
+        prod:'PRODUCTION', calc:'CALC', langSwitch:'ESPAÑOL',
+        tab1:'PARTS/<br>HOUR', tab2:'RUN TO<br>TARGET', tab3:'FINISH<br>BOXES', tab4:'TIMERS',
+        machine:'Press #', placeholder:'optional',
+        cycle:'Cycle Time (Sec)', cycleShort:'Cycle (Sec)', cav:'Cavity Count',
+        pph:'Parts / Hr', pphLong:'Parts Per Hour',
+        target:'Target Parts', count:'Current Count', scrap:'Scrap',
+        boxes:'Number of Boxes', per:'Parts Per Box',
+        finish:'FINISH', done:'DONE', setTimer:'🔔 SET TIMER',
+        timersHdr:'Saved Timers',
+        notifTitle:'Enable Notifications',
+        notifBody:"Allow browser notifications to get alerted when a timer finishes — even if you're on another tab.",
+        notifBtn:'Enable Notifications',
+        notifDenied:'Notifications blocked. Enable in your browser settings.',
+        clearTimers:'Clear All Timers',
+        timerSaved:'Timer saved!', noTimers:'No saved timers.\nSave a finish time from any run calculation.',
+        timerDone:'DONE ✓', timerAt:'Finish @', notifHeader:'⏱ Timer Complete',
+        customCavPrompt:'Enter cavity count:',
+        // Timer modal & edit
+        timerDetail:'Timer Detail',
+        liveStats:'Live Stats',
+        params:'Parameters',
+        statTarget:'Target', statCount:'Projected Count', statRemaining:'Parts Remaining',
+        statTotalParts:'Total Parts', statMade:'Parts Made', statBoxesTotal:'Boxes',
+        statBoxesFilled:'Boxes Filled', statBoxesRemaining:'Boxes Remaining',
+        statPartsPerBox:'Parts/Box',
+        paramCycle:'Cycle', paramPph:'Parts/Hr', paramCavities:'Cavities',
+        edit:'✏️ Edit', share:'📤 Share', delete:'✕ Delete',
+        save:'Save', cancel:'Cancel',
+        confirmDelete:'Delete this timer?',
+        editPress:'Press #', editTarget:'Target Parts', editCount:'Current Count',
+        editScrap:'Total Scrap', editBoxes:'Boxes Remaining',
+        editPartsPerBox:'Parts Per Box', editCycle:'Cycle (Sec)', editPph:'Parts / Hr',
+        editCav:'Cavity Count',
+        // Pause & interruptions
+        pause:'⏸ Pause', resume:'▶ Resume',
+        pausedBadge:'PAUSED',
+        interruptions:'Interruptions',
+        addBreak:'+ Break (10m)', addLunch:'+ Lunch (30m)',
+        removeBreak:'− Break (10m)', removeLunch:'− Lunch (30m)',
+        scheduled:'Scheduled',
+        confirmClearAll:'Clear all timers?',
+        // Card right-side stat
+        statCardParts:'Parts', statCardBoxes:'Boxes',
+        // Share view
+        shareHeader:'PRODUCTION UPDATE',
+        shareTapHint:'tap to dismiss',
+        shareUpdated:'Updated', shareApp:'Production Calc',
+        sec:'sec', cav:'cav',
+      },
+      es: {
+        prod:'PRODUCCIÓN', calc:'CALC', langSwitch:'ENGLISH',
+        tab1:'PIEZAS/<br>HORA', tab2:'META DE<br>CORRIDA', tab3:'CAJAS A<br>TERMINAR', tab4:'TEMP.',
+        machine:'Prensa #', placeholder:'opcional',
+        cycle:'Ciclo (Seg)', cycleShort:'Ciclo (Seg)', cav:'Cavidades',
+        pph:'Pzas / Hr', pphLong:'Piezas Por Hora',
+        target:'Meta de Piezas', count:'Conteo Actual', scrap:'Desperdicio',
+        boxes:'Número de Cajas', per:'Piezas/Caja',
+        finish:'TERMINA', done:'LISTO', setTimer:'🔔 GUARDAR TEMP.',
+        timersHdr:'Temporizadores',
+        notifTitle:'Activar Notificaciones',
+        notifBody:'Permite notificaciones del navegador para recibir una alerta cuando termine un temporizador.',
+        notifBtn:'Activar Notificaciones',
+        notifDenied:'Notificaciones bloqueadas. Activa en configuración del navegador.',
+        clearTimers:'Borrar Todo',
+        timerSaved:'¡Temporizador guardado!', noTimers:'Sin temporizadores.\nGuarda una hora de fin desde cualquier cálculo.',
+        timerDone:'LISTO ✓', timerAt:'Termina @', notifHeader:'⏱ Temporizador Listo',
+        customCavPrompt:'Número de cavidades:',
+        // Timer modal & edit
+        timerDetail:'Detalle del Temporizador',
+        liveStats:'Estadísticas en Vivo',
+        params:'Parámetros',
+        statTarget:'Meta', statCount:'Conteo Proyectado', statRemaining:'Piezas Restantes',
+        statTotalParts:'Piezas Totales', statMade:'Piezas Hechas', statBoxesTotal:'Cajas',
+        statBoxesFilled:'Cajas Llenas', statBoxesRemaining:'Cajas Restantes',
+        statPartsPerBox:'Piezas/Caja',
+        paramCycle:'Ciclo', paramPph:'Pzas/Hr', paramCavities:'Cavidades',
+        edit:'✏️ Editar', share:'📤 Compartir', delete:'✕ Borrar',
+        save:'Guardar', cancel:'Cancelar',
+        confirmDelete:'¿Borrar este temporizador?',
+        editPress:'Prensa #', editTarget:'Meta de Piezas', editCount:'Conteo Actual',
+        editScrap:'Desperdicio Total', editBoxes:'Cajas Restantes',
+        editPartsPerBox:'Piezas Por Caja', editCycle:'Ciclo (Seg)', editPph:'Pzas / Hr',
+        editCav:'Cavidades',
+        // Pause & interruptions
+        pause:'⏸ Pausar', resume:'▶ Reanudar',
+        pausedBadge:'EN PAUSA',
+        interruptions:'Interrupciones',
+        addBreak:'+ Descanso (10m)', addLunch:'+ Almuerzo (30m)',
+        removeBreak:'− Descanso (10m)', removeLunch:'− Almuerzo (30m)',
+        scheduled:'Programado',
+        confirmClearAll:'¿Borrar todos los temporizadores?',
+        // Card right-side stat
+        statCardParts:'Piezas', statCardBoxes:'Cajas',
+        // Share view
+        shareHeader:'ACTUALIZACIÓN',
+        shareTapHint:'toca para cerrar',
+        shareUpdated:'Actualizado', shareApp:'Production Calc',
+        sec:'seg', cav:'cav',
+      }
     };
+    function L(k) { return LANG[currentLang][k] || k; }
 
-    window.addEventListener('resize', () => {
-      if (window.innerHeight < 550) document.body.classList.add('keyboard-active');
-      else document.body.classList.remove('keyboard-active');
-    });
+    function applyLang() {
+      const l = LANG[currentLang];
+      document.getElementById('txt-prod').innerText = l.prod;
+      document.getElementById('txt-calc').innerText = l.calc;
+      document.getElementById('lang-btn').innerText = l.langSwitch;
+
+      // Tabs — preserve badge element in tab-4
+      const badge = document.getElementById('tab-badge');
+      [['tab-1','tab1'],['tab-2','tab2'],['tab-3','tab3'],['tab-4','tab4']].forEach(([id,key]) => {
+        const el = document.getElementById(id);
+        el.innerHTML = l[key];
+        if (id === 'tab-4' && badge) el.insertBefore(badge, el.firstChild);
+      });
+
+      // Simple text labels
+      const map = {
+        'lbl-machine-r':'machine','lbl-machine-c':'machine','lbl-machine-b':'machine',
+        'lbl-cycle-r':'cycle','lbl-cav-r':'cav',
+        'lbl-target':'target','lbl-count':'count','lbl-scrap':'scrap',
+        'lbl-cycle-c':'cycleShort','lbl-pph-c':'pph','lbl-cav-c':'cav',
+        'lbl-boxes':'boxes','lbl-per':'per',
+        'lbl-cycle-b':'cycleShort','lbl-pph-b':'pph','lbl-cav-b':'cav',
+        'lbl-timers-hdr':'timersHdr',
+        'lbl-notif-title':'notifTitle','lbl-notif-body':'notifBody',
+        'notif-btn':'notifBtn','clear-timers-btn':'clearTimers'
+      };
+      Object.entries(map).forEach(([id,key]) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = l[key];
+      });
+      document.querySelectorAll('.machine-field input').forEach(el => { el.placeholder = l.placeholder; });
+    }
 
     function toggleLang() {
       currentLang = currentLang === 'en' ? 'es' : 'en';
-      const l = lang[currentLang];
-      document.getElementById('txt-prod').innerText = l.prod;
-      document.getElementById('txt-calc').innerText = l.calc;
-      document.getElementById('lang-btn').innerText = currentLang === 'en' ? 'ESPAÑOL' : 'ENGLISH';
-      document.getElementById('tab-1').innerText = l.tab1;
-      document.getElementById('tab-2').innerText = l.tab2;
-      document.getElementById('tab-3').innerText = l.tab3;
-      document.getElementById('lbl-cycle-r').innerText = l.cycle;
-      document.getElementById('lbl-cycle-c').innerText = l.cycle;
-      document.getElementById('lbl-cycle-b').innerText = l.cycle;
-      document.getElementById('lbl-cav-r').innerText = l.cav;
-      document.getElementById('lbl-cav-c').innerText = l.cav;
-      document.getElementById('lbl-cav-b').innerText = l.cav;
-      document.getElementById('lbl-pph-c').innerText = l.pph;
-      document.getElementById('lbl-pph-b').innerText = l.pph;
-      document.getElementById('lbl-scrap').innerText = l.scrap;
-      document.getElementById('lbl-target').innerText = l.target;
-      document.getElementById('lbl-count').innerText = l.count;
-      document.getElementById('lbl-boxes').innerText = l.boxes;
-      document.getElementById('lbl-per').innerText = l.per;
+      applyLang();
+      // Re-localize timer labels generated from context
+      savedTimers.forEach(t => { if (t.type) t.label = buildLabelFromCtx(t); });
+      persistTimers();
       calcRate(); calcChange(); calcBox();
+      renderTimers();
+      if (activeTimerId !== null) {
+        document.getElementById('tm-header-title').innerText = L('timerDetail');
+        renderTimerModal();
+      }
+      if (shareTimerId !== null) renderShareView();
+      saveAll();
     }
 
-    function clearAll() {
-      document.querySelectorAll('input').forEach(i => i.value = '');
-      cavs = { r: 1, c: 1, b: 1 };
-      document.querySelectorAll('.cav-grid').forEach(grid => {
-        grid.querySelectorAll('.cav-btn').forEach((b, idx) => {
-          idx === 0 ? b.classList.add('active') : b.classList.remove('active');
-        });
-      });
-      document.getElementById('r-sticky').innerHTML = '';
-      document.getElementById('c-sticky').innerHTML = '';
-      document.getElementById('b-sticky').innerHTML = '';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    // ── THEME ──
+    function toggleTheme() {
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+      document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      document.getElementById('theme-btn').innerText = isDark ? '🌙' : '☀️';
+      saveAll();
     }
 
+    // ── TABS ──
     function showTab(id, btn) {
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById(id).classList.add('active');
       btn.classList.add('active');
-      window.scrollTo(0, 0);
+      window.scrollTo({ top:0, behavior:'smooth' });
+      if (id === 'timers') refreshNotifBanner();
     }
 
-    function setCav(prefix, n, btn) {
+    // ── CAVITY ──
+    function setCav(prefix, n, btn, isInit = false) {
       cavs[prefix] = n;
       btn.parentElement.querySelectorAll('.cav-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      if (prefix === 'r') calcRate(); if (prefix === 'c') calcChange(); if (prefix === 'b') calcBox();
+      if (prefix==='r') calcRate();
+      if (prefix==='c') calcChange();
+      if (prefix==='b') calcBox();
+      if (!isInit) saveAll();
     }
 
+    function setCustomCav(prefix, btn) {
+      const current = customCavs[prefix] || '';
+      const input = prompt(L('customCavPrompt'), current);
+      if (input === null) return; // cancelled
+      const n = parseInt(input, 10);
+      if (!n || n < 1 || n > 999) return;
+      customCavs[prefix] = n;
+      btn.innerText = n;
+      btn.dataset.val = n;
+      btn.classList.add('has-value');
+      setCav(prefix, n, btn);
+    }
     function clearPeer(prefix, type) {
-      document.getElementById(prefix + (type === 'cycle' ? '-pph' : '-cycle')).value = '';
+      document.getElementById(prefix + (type==='cycle' ? '-pph' : '-cycle')).value = '';
     }
 
-    function toggleTheme() {
-      const isDark = document.body.getAttribute('data-theme') === 'dark';
-      document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-      document.getElementById('theme-btn').innerText = isDark ? '🌙' : '☀️';
-    }
+    // ── CALCULATIONS ──
+    function fmtDur(s) { return Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m'; }
 
     function calcRate() {
       const cyc = parseFloat(document.getElementById('r-cycle').value);
       const sticky = document.getElementById('r-sticky');
-      if (!cyc) { sticky.innerHTML = ''; return; }
-      const pph = Math.round((3600 / cyc) * cavs.r);
-      sticky.innerHTML = `<div class="result-card"><div class="res-big">${pph.toLocaleString()}</div><div class="res-sub">${lang[currentLang].pph}</div></div>`;
+      if (!cyc || cyc<=0) { sticky.innerHTML=''; return; }
+      const pph = Math.round((3600/cyc)*cavs.r);
+      sticky.innerHTML = `<div class="result-card"><div class="res-big">${pph.toLocaleString()}</div><div class="res-sub">${L('pphLong')}</div></div>`;
+      saveAll();
     }
 
     function calcChange() {
-      const target = parseFloat(document.getElementById('c-target').value) || 0;
-      const count = parseFloat(document.getElementById('c-count').value) || 0;
-      const scrap = parseFloat(document.getElementById('c-scrap').value) || 0;
-      const cyc = parseFloat(document.getElementById('c-cycle').value);
-      const pph = parseFloat(document.getElementById('c-pph').value);
+      const target = parseFloat(document.getElementById('c-target').value)||0;
+      const count  = parseFloat(document.getElementById('c-count').value)||0;
+      const scrap  = parseFloat(document.getElementById('c-scrap').value)||0;
+      const cyc    = parseFloat(document.getElementById('c-cycle').value);
+      const pph    = parseFloat(document.getElementById('c-pph').value);
       const sticky = document.getElementById('c-sticky');
-      if (target <= 0 || (!cyc && !pph)) { sticky.innerHTML = ''; return; }
-      const needed = (target - count) + scrap;
-      const perc = Math.min(100, Math.max(0, Math.round((count / target) * 100)));
-      let secs = needed > 0 ? (cyc ? (Math.ceil(needed / cavs.c) * cyc) : ((needed / pph) * 3600)) : 0;
-      const finish = new Date(Date.now() + secs * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
+      if (target<=0 || (!cyc && !pph)) { sticky.innerHTML=''; return; }
+
+      const needed = (target-count)+scrap;
+      const perc   = Math.min(100, Math.max(0, Math.round((count/target)*100)));
+      const secs   = needed>0 ? (cyc ? Math.ceil(needed/cavs.c)*cyc : (needed/pph)*3600) : 0;
+      const epoch  = Date.now()+secs*1000;
+      const fin    = new Date(epoch).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
       sticky.innerHTML = `
         <div class="result-card">
           <div class="prog-container">
             <div class="prog-bar" style="width:${perc}%"></div>
             <span class="prog-label">${perc}%</span>
           </div>
-          <div class="res-big">${needed <= 0 ? 'DONE' : Math.floor(secs / 3600) + 'h ' + Math.floor((secs % 3600) / 60) + 'm'}</div>
-          <div class="res-sub">${lang[currentLang].finish}: ${finish}</div>
+          <div class="res-big">${needed<=0 ? L('done') : fmtDur(secs)}</div>
+          <div class="res-sub">${L('finish')}: ${fin}</div>
+          ${needed>0 ? `<button class="set-timer-btn" onclick="saveTimerFromCalc('c')">${L('setTimer')}</button>` : ''}
         </div>`;
+      saveAll();
     }
 
     function calcBox() {
-      const total = (parseFloat(document.getElementById('b-boxes').value) || 0) * (parseFloat(document.getElementById('b-per').value) || 0);
-      const cyc = parseFloat(document.getElementById('b-cycle').value), pph = parseFloat(document.getElementById('b-pph').value);
+      const total = (parseFloat(document.getElementById('b-boxes').value)||0) * (parseFloat(document.getElementById('b-per').value)||0);
+      const cyc   = parseFloat(document.getElementById('b-cycle').value);
+      const pph   = parseFloat(document.getElementById('b-pph').value);
       const sticky = document.getElementById('b-sticky');
-      if (total <= 0 || (!cyc && !pph)) { sticky.innerHTML = ''; return; }
-      let secs = cyc ? (Math.ceil(total / cavs.b) * cyc) : ((total / pph) * 3600);
-      const finish = new Date(Date.now() + secs * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      sticky.innerHTML = `<div class="result-card"><div class="res-big">${Math.floor(secs / 3600)}h ${Math.floor((secs % 3600) / 60)}m</div><div class="res-sub">${lang[currentLang].finish}: ${finish}</div></div>`;
+      if (total<=0 || (!cyc && !pph)) { sticky.innerHTML=''; return; }
+      const secs  = cyc ? Math.ceil(total/cavs.b)*cyc : (total/pph)*3600;
+      const epoch = Date.now()+secs*1000;
+      const fin   = new Date(epoch).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      sticky.innerHTML = `
+        <div class="result-card">
+          <div class="res-big">${fmtDur(secs)}</div>
+          <div class="res-sub">${L('finish')}: ${fin}</div>
+          <button class="set-timer-btn" onclick="saveTimerFromCalc('b')">${L('setTimer')}</button>
+        </div>`;
+      saveAll();
     }
 
-    document.querySelectorAll('input').forEach(input => {
-      input.addEventListener('keyup', (e) => {
-        if (e.key === 'Enter') input.blur();
+    // ── TIMERS ──
+    function persistTimers() { try { localStorage.setItem('pressCalcTimers', JSON.stringify(savedTimers)); } catch(e){} }
+
+    // Read full calc context from a tab's inputs
+    function readCalcContext(prefix) {
+      const cyc      = parseFloat(document.getElementById(prefix+'-cycle').value) || null;
+      const pph      = parseFloat(document.getElementById(prefix+'-pph').value)   || null;
+      const cavities = cavs[prefix];
+      const press    = (document.getElementById(prefix+'-machine').value || '').trim();
+      if (prefix === 'c') {
+        return {
+          type: 'run-to-target',
+          pressNum: press,
+          target:       parseFloat(document.getElementById('c-target').value) || 0,
+          initialCount: parseFloat(document.getElementById('c-count').value)  || 0,
+          scrap:        parseFloat(document.getElementById('c-scrap').value)  || 0,
+          cycleSec: cyc, pph, cavities,
+        };
+      } else if (prefix === 'b') {
+        return {
+          type: 'finish-boxes',
+          pressNum: press,
+          boxes:       parseFloat(document.getElementById('b-boxes').value) || 0,
+          partsPerBox: parseFloat(document.getElementById('b-per').value)   || 0,
+          cycleSec: cyc, pph, cavities,
+        };
+      }
+      return null;
+    }
+
+    // Compute total parts to make and run-time from a context
+    function computeTimerSeconds(ctx) {
+      let totalToMake;
+      if (ctx.type === 'run-to-target') {
+        totalToMake = Math.max(0, (ctx.target - ctx.initialCount) + ctx.scrap);
+      } else {
+        totalToMake = ctx.boxes * ctx.partsPerBox;
+      }
+      if (totalToMake <= 0) return 0;
+      if (ctx.cycleSec) {
+        return Math.ceil(totalToMake / ctx.cavities) * ctx.cycleSec;
+      } else if (ctx.pph) {
+        return (totalToMake / ctx.pph) * 3600;
+      }
+      return 0;
+    }
+
+    function buildLabelFromCtx(ctx) {
+      const tabKey = ctx.type === 'run-to-target' ? 'tab2' : 'tab3';
+      const op = L(tabKey).replace(/<br>/g,' ');
+      const press = ctx.pressNum ? ctx.pressNum + ' – ' : '';
+      return press + op;
+    }
+
+    async function saveTimerFromCalc(prefix) {
+      if ('Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+      const ctx = readCalcContext(prefix);
+      if (!ctx) return;
+      const secs = computeTimerSeconds(ctx);
+      if (secs <= 0) return;
+      const now = Date.now();
+      const timer = {
+        id: now,
+        startEpoch: now,
+        finishEpoch: now + secs * 1000,
+        notified: false,
+        pausedAt: null,
+        totalPauseMs: 0,
+        scheduledBreakMs: 0,
+        ...ctx,
+      };
+      // Generate label from context (so it follows current language until edited)
+      timer.label = buildLabelFromCtx(timer);
+      savedTimers.push(timer);
+      persistTimers(); renderTimers(); updateBadge();
+      showToast(L('timerSaved'));
+    }
+
+    // Live stats: project current count and remaining work
+    // Pause-aware: if paused, "now" freezes at pausedAt; totalPauseMs excludes break time
+    function getReferenceTime(t) {
+      return t.pausedAt || Date.now();
+    }
+    function getElapsedMs(t) {
+      return Math.max(0, getReferenceTime(t) - t.startEpoch - (t.totalPauseMs || 0));
+    }
+    function getRemainingMs(t) {
+      return t.finishEpoch - getReferenceTime(t);
+    }
+
+    function computeLiveStats(t) {
+      // Backwards-compat: old timers without type get null stats
+      if (!t.type) return null;
+      const elapsedSec = getElapsedMs(t) / 1000;
+      // parts per second
+      const pps = t.cycleSec ? (t.cavities / t.cycleSec) : (t.pph / 3600);
+      if (!pps || pps <= 0) return null;
+
+      if (t.type === 'run-to-target') {
+        const totalNeeded = Math.max(0, (t.target - t.initialCount) + t.scrap);
+        const partsMade = Math.min(Math.floor(elapsedSec * pps), totalNeeded);
+        const projectedCount = t.initialCount + partsMade;
+        const remaining = Math.max(0, totalNeeded - partsMade);
+        const pct = totalNeeded > 0 ? Math.min(100, Math.round((partsMade / totalNeeded) * 100)) : 100;
+        return { kind:'run-to-target', totalNeeded, partsMade, projectedCount, remaining, target: t.target, pct };
+      } else {
+        const totalParts = t.boxes * t.partsPerBox;
+        const partsMade = Math.min(Math.floor(elapsedSec * pps), totalParts);
+        const partsRemaining = Math.max(0, totalParts - partsMade);
+        const boxesFilled = t.partsPerBox > 0 ? Math.floor(partsMade / t.partsPerBox) : 0;
+        const boxesRemaining = Math.max(0, t.boxes - boxesFilled);
+        const pct = totalParts > 0 ? Math.min(100, Math.round((partsMade / totalParts) * 100)) : 100;
+        return { kind:'finish-boxes', totalParts, partsMade, partsRemaining,
+                 boxes: t.boxes, partsPerBox: t.partsPerBox,
+                 boxesFilled, boxesRemaining, pct };
+      }
+    }
+
+    // Delete from list — with confirmation
+    function removeTimer(id, ev) {
+      if (ev) ev.stopPropagation();
+      if (!confirm(L('confirmDelete'))) return;
+      savedTimers = savedTimers.filter(t => t.id !== id);
+      persistTimers(); renderTimers(); updateBadge();
+    }
+
+    // ── PAUSE / RESUME ──
+    function togglePause(id) {
+      const t = savedTimers.find(t => t.id === id);
+      if (!t) return;
+      if (t.pausedAt) {
+        // Resume: shift finish + accumulate pause time
+        const pauseDuration = Date.now() - t.pausedAt;
+        t.finishEpoch += pauseDuration;
+        t.totalPauseMs = (t.totalPauseMs || 0) + pauseDuration;
+        t.pausedAt = null;
+        t.notified = false; // re-arm in case the new finish is in the future
+      } else {
+        t.pausedAt = Date.now();
+      }
+      persistTimers();
+      renderTimers();
+      updateBadge();
+      if (activeTimerId === id && !editMode) renderTimerModal();
+      if (shareTimerId === id) renderShareView();
+    }
+
+    // Add a known-duration interruption (break/lunch). Identical to pause+wait+resume.
+    function applyInterruptionMs(t, ms) {
+      t.finishEpoch += ms;
+      t.totalPauseMs = (t.totalPauseMs || 0) + ms;
+      t.notified = false;
+    }
+
+    function clearAllTimers() {
+      if (savedTimers.length === 0) return;
+      if (!confirm(L('confirmClearAll'))) return;
+      savedTimers = []; persistTimers(); renderTimers(); updateBadge();
+    }
+
+    function renderTimers() {
+      const list    = document.getElementById('timers-list');
+      const clearBtn = document.getElementById('clear-timers-btn');
+      if (!list) return;
+      if (savedTimers.length === 0) {
+        list.innerHTML = `<div class="empty-timers">${L('noTimers').replace('\n','<br>')}</div>`;
+        if (clearBtn) clearBtn.style.display = 'none';
+        return;
+      }
+      if (clearBtn) clearBtn.style.display = 'block';
+      // Sort: ends soonest on top; paused timers fall to the bottom
+      const sorted = savedTimers.slice().sort((a, b) => {
+        if (a.pausedAt && !b.pausedAt) return 1;
+        if (!a.pausedAt && b.pausedAt) return -1;
+        return a.finishEpoch - b.finishEpoch;
       });
+      list.innerHTML = sorted.map(t => {
+        const rem  = getRemainingMs(t);
+        const done = rem <= 0 && !t.pausedAt;
+        const paused = !!t.pausedAt;
+        const h = Math.max(0, Math.floor(rem/3600000));
+        const m = Math.max(0, Math.floor((rem%3600000)/60000));
+        const s = Math.max(0, Math.floor((rem%60000)/1000));
+        const cd = done ? L('timerDone') : `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+        const at = new Date(t.finishEpoch).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+        // Break indicator (scheduled break/lunch baked into finish time)
+        const breakMs = t.scheduledBreakMs || 0;
+        const breakBadge = breakMs > 0
+          ? `<span class="tc-break">☕ ${Math.floor(breakMs / 60000)}m</span>`
+          : '';
+
+        // Right-side stat snippet
+        const stats = computeLiveStats(t);
+        let statHTML = '';
+        if (stats) {
+          if (stats.kind === 'run-to-target') {
+            statHTML = `<div class="tc-stat">
+              <div class="tc-stat-label">${L('statCardParts')}</div>
+              <div class="tc-stat-value">${stats.projectedCount.toLocaleString()}/${stats.target.toLocaleString()}</div>
+            </div>`;
+          } else {
+            statHTML = `<div class="tc-stat">
+              <div class="tc-stat-label">${L('statCardBoxes')}</div>
+              <div class="tc-stat-value">${stats.boxesFilled.toLocaleString()}/${stats.boxes.toLocaleString()}</div>
+            </div>`;
+          }
+        }
+
+        const cls = [paused ? 'paused' : (done ? 'done' : ''), stats ? 'has-stat' : ''].filter(Boolean).join(' ');
+        return `
+          <div class="timer-card ${cls}" onclick="openTimerModal(${t.id})">
+            <div class="tc-body">
+              <div class="tc-label">${t.label}${paused?`<span class="paused-badge">${L('pausedBadge')}</span>`:''}</div>
+              <div class="tc-countdown">${cd}</div>
+              <div class="tc-at">${L('timerAt')} ${at}${breakBadge}</div>
+            </div>
+            <button class="tc-dismiss" onclick="removeTimer(${t.id}, event)">✕</button>
+            ${statHTML}
+          </div>`;
+      }).join('');
+    }
+
+    function updateBadge() {
+      const badge  = document.getElementById('tab-badge');
+      const active = savedTimers.filter(t => !t.pausedAt && t.finishEpoch > Date.now()).length;
+      if (active > 0) { badge.style.display='inline-block'; badge.innerText=active; }
+      else { badge.style.display='none'; badge.classList.remove('alert'); }
+    }
+
+    // Tick every second
+    setInterval(() => {
+      let changed = false;
+      savedTimers.forEach(t => {
+        if (!t.notified && !t.pausedAt && Date.now() >= t.finishEpoch) {
+          t.notified = true; changed = true;
+          fireAlert(t.label);
+        }
+      });
+      if (changed) persistTimers();
+      renderTimers(); updateBadge();
+      if (activeTimerId !== null && !editMode) renderTimerModal();
+      if (shareTimerId !== null) renderShareView();
+    }, 1000);
+
+    function fireAlert(label) {
+      playBeep();
+      const badge = document.getElementById('tab-badge');
+      badge.style.display = 'inline-block';
+      badge.classList.add('alert');
+      setTimeout(() => badge.classList.remove('alert'), 8000);
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try { new Notification(L('notifHeader'), { body: label }); } catch(e){}
+      }
+    }
+
+    function playBeep() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [0, 0.22, 0.44].forEach(delay => {
+          const osc = ctx.createOscillator(), gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.frequency.value = 880; osc.type = 'sine';
+          gain.gain.setValueAtTime(0, ctx.currentTime+delay);
+          gain.gain.linearRampToValueAtTime(0.28, ctx.currentTime+delay+0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+delay+0.28);
+          osc.start(ctx.currentTime+delay); osc.stop(ctx.currentTime+delay+0.3);
+        });
+      } catch(e){}
+    }
+
+    function refreshNotifBanner() {
+      const banner = document.getElementById('notif-banner');
+      if (!banner || !('Notification' in window)) { if(banner) banner.style.display='none'; return; }
+      if (Notification.permission === 'default') {
+        banner.style.display = 'block';
+        banner.innerHTML = `
+          <strong id="lbl-notif-title">${L('notifTitle')}</strong>
+          <span id="lbl-notif-body">${L('notifBody')}</span>
+          <button class="notif-enable-btn" id="notif-btn" onclick="requestNotifPermission()">${L('notifBtn')}</button>`;
+      } else if (Notification.permission === 'denied') {
+        banner.style.display = 'block';
+        banner.innerHTML = `<strong>${L('notifTitle')}</strong><div class="notif-denied">${L('notifDenied')}</div>`;
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+
+    async function requestNotifPermission() {
+      if (!('Notification' in window)) return;
+      await Notification.requestPermission();
+      refreshNotifBanner();
+    }
+
+    // ── TIMER DETAIL MODAL ──
+    function openTimerModal(id) {
+      activeTimerId = id;
+      editMode = false;
+      editDraft = null;
+      const modal = document.getElementById('timer-modal');
+      modal.classList.add('show');
+      document.getElementById('tm-header-title').innerText = L('timerDetail');
+      renderTimerModal();
+    }
+
+    function closeTimerModal() {
+      activeTimerId = null;
+      editMode = false;
+      editDraft = null;
+      document.getElementById('timer-modal').classList.remove('show');
+    }
+
+    function getActiveTimer() {
+      return savedTimers.find(t => t.id === activeTimerId);
+    }
+
+    function fmtCountdown(ms) {
+      if (ms <= 0) return L('timerDone');
+      const h = Math.floor(ms / 3600000);
+      const m = Math.floor((ms % 3600000) / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      return `${h}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+    }
+
+    function renderTimerModal() {
+      const t = getActiveTimer();
+      if (!t) { closeTimerModal(); return; }
+      const body = document.getElementById('tm-body');
+      if (editMode) { renderEditMode(body, t); return; }
+
+      const rem = getRemainingMs(t);
+      const paused = !!t.pausedAt;
+      const done = rem <= 0 && !paused;
+      const cd = paused
+        ? (rem > 0
+            ? `${Math.floor(rem/3600000)}h ${String(Math.floor((rem%3600000)/60000)).padStart(2,'0')}m ${String(Math.floor((rem%60000)/1000)).padStart(2,'0')}s`
+            : L('timerDone'))
+        : fmtCountdown(rem);
+      const finStr = new Date(t.finishEpoch).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      const stats = computeLiveStats(t);
+
+      let statsHTML = '';
+      if (stats) {
+        const barCls = paused ? ' paused' : '';
+        if (stats.kind === 'run-to-target') {
+          statsHTML = `
+            <div class="tm-stats">
+              <div class="tm-stats-title">${L('liveStats')}</div>
+              <div class="prog-sm"><div class="prog-sm-bar${barCls}" style="width:${stats.pct}%"></div></div>
+              <div class="tm-stat-row"><span class="tm-stat-label">${L('statTarget')}</span><span class="tm-stat-value">${stats.target.toLocaleString()}</span></div>
+              <div class="tm-stat-row"><span class="tm-stat-label">${L('statCount')}</span><span class="tm-stat-value accent">${stats.projectedCount.toLocaleString()}</span></div>
+              <div class="tm-stat-row"><span class="tm-stat-label">${L('statRemaining')}</span><span class="tm-stat-value">${stats.remaining.toLocaleString()}</span></div>
+            </div>`;
+        } else {
+          statsHTML = `
+            <div class="tm-stats">
+              <div class="tm-stats-title">${L('liveStats')}</div>
+              <div class="prog-sm"><div class="prog-sm-bar${barCls}" style="width:${stats.pct}%"></div></div>
+              <div class="tm-stat-row"><span class="tm-stat-label">${L('statBoxesTotal')}</span><span class="tm-stat-value">${stats.boxes.toLocaleString()}</span></div>
+              <div class="tm-stat-row"><span class="tm-stat-label">${L('statBoxesFilled')}</span><span class="tm-stat-value accent">${stats.boxesFilled.toLocaleString()}</span></div>
+              <div class="tm-stat-row"><span class="tm-stat-label">${L('statBoxesRemaining')}</span><span class="tm-stat-value">${stats.boxesRemaining.toLocaleString()}</span></div>
+              <div class="tm-stat-row"><span class="tm-stat-label">${L('statMade')} / ${L('statTotalParts')}</span><span class="tm-stat-value">${stats.partsMade.toLocaleString()} / ${stats.totalParts.toLocaleString()}</span></div>
+            </div>`;
+        }
+      }
+
+      let metaHTML = '';
+      if (t.type) {
+        const parts = [];
+        if (t.cycleSec) parts.push(`${L('paramCycle')}: ${t.cycleSec}${L('sec')}`);
+        if (t.pph)      parts.push(`${L('paramPph')}: ${t.pph}`);
+        parts.push(`${t.cavities} ${L('paramCavities')}`);
+        metaHTML = `<div class="tm-meta">${parts.join(' • ')}</div>`;
+      }
+
+      // Pause button hidden if timer already finished and not paused
+      const showPauseBtn = !done;
+      const pauseBtnHTML = showPauseBtn ? `
+        <button class="tm-pause-btn${paused?' resume':''}" onclick="togglePause(${t.id})">
+          ${paused ? L('resume') : L('pause')}
+        </button>` : '';
+
+      body.innerHTML = `
+        <div class="tm-label">${escapeHTML(t.label)}${paused?`<span class="paused-badge">${L('pausedBadge')}</span>`:''}</div>
+        <div class="tm-countdown ${done?'done':''}${paused?' paused-display':''}">${cd}</div>
+        <div class="tm-finish">${L('finish')}: ${finStr}</div>
+        ${statsHTML}
+        ${metaHTML}
+        ${pauseBtnHTML}
+        <div class="tm-actions">
+          <button class="tm-btn primary" onclick="openShareView()">${L('share')}</button>
+          ${t.type ? `<button class="tm-btn" onclick="enterEditMode()">${L('edit')}</button>` : ''}
+        </div>
+        <div class="tm-actions full">
+          <button class="tm-btn danger" onclick="confirmDeleteFromModal()">${L('delete')}</button>
+        </div>`;
+    }
+
+    function escapeHTML(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function confirmDeleteFromModal() {
+      if (!confirm(L('confirmDelete'))) return;
+      const id = activeTimerId;
+      closeTimerModal();
+      savedTimers = savedTimers.filter(t => t.id !== id);
+      persistTimers(); renderTimers(); updateBadge();
+    }
+
+    // ── EDIT MODE ──
+    function enterEditMode() {
+      const t = getActiveTimer();
+      if (!t || !t.type) return;
+      editMode = true;
+      // Pre-fill draft with live values where appropriate
+      const stats = computeLiveStats(t);
+      const existingBreakMs = t.scheduledBreakMs || 0;
+      if (t.type === 'run-to-target') {
+        editDraft = {
+          type: t.type,
+          pressNum: t.pressNum || '',
+          target:       t.target,
+          initialCount: stats ? stats.projectedCount : t.initialCount,
+          scrap:        t.scrap,
+          cycleSec: t.cycleSec, pph: t.pph,
+          cavities: t.cavities,
+          breakAddMs: existingBreakMs,
+        };
+      } else {
+        editDraft = {
+          type: t.type,
+          pressNum: t.pressNum || '',
+          boxes:       stats ? Math.max(1, stats.boxesRemaining || (t.boxes - (stats.boxesFilled||0))) : t.boxes,
+          partsPerBox: t.partsPerBox,
+          cycleSec: t.cycleSec, pph: t.pph,
+          cavities: t.cavities,
+          breakAddMs: existingBreakMs,
+        };
+      }
+      renderTimerModal();
+    }
+
+    function exitEditMode() {
+      editMode = false;
+      editDraft = null;
+      renderTimerModal();
+    }
+
+    function renderEditMode(body, t) {
+      const d = editDraft;
+      const cavGrid = (current) => {
+        const standard = [1,2,3,4];
+        const isStd = standard.includes(current);
+        return `<div class="cav-grid" id="edit-cav-grid">
+          ${standard.map(n => `<button type="button" class="cav-btn${current===n?' active':''}" data-val="${n}" onclick="editSetCav(${n}, this)">${n}</button>`).join('')}
+          <button type="button" class="cav-btn cav-btn-custom${!isStd?' active has-value':''}" data-val="${!isStd?current:''}" onclick="editSetCustomCav(this)">${!isStd?current:'…'}</button>
+        </div>`;
+      };
+
+      let fields = '';
+      // Press # (always)
+      fields += `<div class="field"><label>${L('editPress')}</label><input type="text" inputmode="numeric" pattern="[0-9]*" id="edit-press" value="${escapeHTML(d.pressNum||'')}" placeholder="${L('placeholder')}"></div>`;
+
+      if (d.type === 'run-to-target') {
+        fields += `<div class="field"><label>${L('editTarget')}</label><input type="number" inputmode="decimal" id="edit-target" value="${d.target||''}"></div>`;
+        fields += `<div class="field"><label>${L('editCount')}</label><input type="number" inputmode="decimal" id="edit-count" value="${d.initialCount||''}"></div>`;
+        fields += `<div class="field"><label>${L('editScrap')}</label><input type="number" inputmode="decimal" id="edit-scrap" value="${d.scrap||''}"></div>`;
+      } else {
+        fields += `<div class="field"><label>${L('editBoxes')}</label><input type="number" inputmode="decimal" id="edit-boxes" value="${d.boxes||''}"></div>`;
+        fields += `<div class="field"><label>${L('editPartsPerBox')}</label><input type="number" inputmode="decimal" id="edit-perbox" value="${d.partsPerBox||''}"></div>`;
+      }
+
+      fields += `<div class="two-col">
+        <div class="field"><label>${L('editCycle')}</label><input type="number" inputmode="decimal" id="edit-cycle" value="${d.cycleSec||''}" oninput="document.getElementById('edit-pph').value=''"></div>
+        <div class="field"><label>${L('editPph')}</label><input type="number" inputmode="decimal" id="edit-pph" value="${d.pph||''}" oninput="document.getElementById('edit-cycle').value=''"></div>
+      </div>`;
+      fields += `<div class="field"><label>${L('editCav')}</label>${cavGrid(d.cavities)}</div>`;
+
+      // Break / Lunch quick-add chips
+      const summary = d.breakAddMs > 0
+        ? `☕ ${L('scheduled')}: ${Math.floor(d.breakAddMs / 60000)}m`
+        : '';
+      const canRemove = (d.breakAddMs || 0) > 0;
+      const canRemoveLunch = (d.breakAddMs || 0) >= 30 * 60 * 1000;
+      const canRemoveBreak = (d.breakAddMs || 0) >= 10 * 60 * 1000;
+      const interruptionsHTML = `
+        <div class="interruption-section">
+          <div class="interruption-title">${L('interruptions')}</div>
+          <div class="interruption-chips">
+            <button type="button" class="chip-btn" onclick="addBreakToEdit(10)">${L('addBreak')}</button>
+            <button type="button" class="chip-btn" onclick="addBreakToEdit(30)">${L('addLunch')}</button>
+            <button type="button" class="chip-btn minus" onclick="addBreakToEdit(-10)" ${canRemoveBreak?'':'disabled'}>${L('removeBreak')}</button>
+            <button type="button" class="chip-btn minus" onclick="addBreakToEdit(-30)" ${canRemoveLunch?'':'disabled'}>${L('removeLunch')}</button>
+          </div>
+          <div class="interruption-summary" id="edit-break-summary">${summary}</div>
+        </div>`;
+
+      body.innerHTML = `
+        <div class="tm-edit-section">
+          ${fields}
+          ${interruptionsHTML}
+          <div class="tm-actions">
+            <button class="tm-btn" onclick="exitEditMode()">${L('cancel')}</button>
+            <button class="tm-btn success" onclick="saveEdit()">${L('save')}</button>
+          </div>
+        </div>`;
+    }
+
+    function addBreakToEdit(minutes) {
+      if (!editDraft) return;
+      const current = editDraft.breakAddMs || 0;
+      const next = Math.max(0, current + minutes * 60 * 1000);
+      if (next === current) return; // floor reached, nothing to do
+      editDraft.breakAddMs = next;
+      // Update summary text in place
+      const s = document.getElementById('edit-break-summary');
+      if (s) {
+        s.innerText = next > 0 ? `☕ ${L('scheduled')}: ${Math.floor(next / 60000)}m` : '';
+      }
+      // Re-enable/disable minus buttons based on new total
+      const btns = document.querySelectorAll('.interruption-chips .chip-btn.minus');
+      btns.forEach(btn => {
+        const onclick = btn.getAttribute('onclick') || '';
+        const reqMs = onclick.includes('-30') ? 30*60*1000 : 10*60*1000;
+        btn.disabled = next < reqMs;
+      });
+    }
+
+    function editSetCav(n, btn) {
+      editDraft.cavities = n;
+      const grid = document.getElementById('edit-cav-grid');
+      grid.querySelectorAll('.cav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // also clear custom 'has-value' active state but keep its label
+    }
+
+    function editSetCustomCav(btn) {
+      const current = editDraft.cavities;
+      const input = prompt(L('customCavPrompt'), String(current));
+      if (input === null) return;
+      const n = parseInt(input, 10);
+      if (!n || n < 1 || n > 999) return;
+      editDraft.cavities = n;
+      btn.innerText = n;
+      btn.dataset.val = n;
+      btn.classList.add('has-value');
+      const grid = document.getElementById('edit-cav-grid');
+      grid.querySelectorAll('.cav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function saveEdit() {
+      const t = getActiveTimer();
+      if (!t || !editDraft) return;
+      const d = editDraft;
+
+      // Read the form values
+      d.pressNum = (document.getElementById('edit-press').value || '').trim();
+      const cyc  = parseFloat(document.getElementById('edit-cycle').value);
+      const pph  = parseFloat(document.getElementById('edit-pph').value);
+      d.cycleSec = cyc || null;
+      d.pph      = pph || null;
+
+      if (d.type === 'run-to-target') {
+        d.target       = parseFloat(document.getElementById('edit-target').value) || 0;
+        d.initialCount = parseFloat(document.getElementById('edit-count').value)  || 0;
+        d.scrap        = parseFloat(document.getElementById('edit-scrap').value)  || 0;
+      } else {
+        d.boxes       = parseFloat(document.getElementById('edit-boxes').value)  || 0;
+        d.partsPerBox = parseFloat(document.getElementById('edit-perbox').value) || 0;
+      }
+
+      if (!d.cycleSec && !d.pph) return; // need one
+      const secs = computeTimerSeconds(d);
+      if (secs <= 0) return;
+
+      const now = Date.now();
+      const breakMs = d.breakAddMs || 0;
+      // Apply changes to original timer record
+      Object.assign(t, d);
+      delete t.breakAddMs;
+      t.startEpoch       = now;
+      t.finishEpoch      = now + secs * 1000 + breakMs;
+      t.notified         = false;
+      t.pausedAt         = null;
+      t.totalPauseMs     = breakMs;     // scheduled break is excluded from work time
+      t.scheduledBreakMs = breakMs;     // tracked separately for the card indicator
+      t.label            = buildLabelFromCtx(t);
+
+      persistTimers();
+      editMode = false;
+      editDraft = null;
+      renderTimerModal();
+      renderTimers();
+      updateBadge();
+      showToast(L('timerSaved'));
+    }
+
+    // ── SHARE / SCREENSHOT VIEW ──
+    function openShareView() {
+      shareTimerId = activeTimerId;
+      document.getElementById('share-modal').classList.add('show');
+      document.getElementById('share-tap-hint').innerText = L('shareTapHint');
+      renderShareView();
+    }
+
+    function closeShareView() {
+      shareTimerId = null;
+      document.getElementById('share-modal').classList.remove('show');
+    }
+
+    function renderShareView() {
+      const t = savedTimers.find(t => t.id === shareTimerId);
+      if (!t) { closeShareView(); return; }
+
+      const rem  = getRemainingMs(t);
+      const paused = !!t.pausedAt;
+      const done = rem <= 0 && !paused;
+      const cd   = paused
+        ? (rem > 0
+            ? `${Math.floor(rem/3600000)}h ${String(Math.floor((rem%3600000)/60000)).padStart(2,'0')}m ${String(Math.floor((rem%60000)/1000)).padStart(2,'0')}s`
+            : L('timerDone'))
+        : fmtCountdown(rem);
+      const finStr = new Date(t.finishEpoch).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      const updated = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      const stats = computeLiveStats(t);
+
+      const tabKey = t.type === 'run-to-target' ? 'tab2' : (t.type === 'finish-boxes' ? 'tab3' : null);
+      const opName = tabKey ? L(tabKey).replace(/<br>/g,' ') : '';
+      const press = t.pressNum ? `${L('editPress').toUpperCase()} ${t.pressNum}` : '';
+
+      let statsRows = '';
+      if (stats && stats.kind === 'run-to-target') {
+        statsRows = `
+          <div class="share-stat-row"><span class="share-stat-label">${L('statTarget')}</span><span class="share-stat-value">${stats.target.toLocaleString()}</span></div>
+          <div class="share-stat-row"><span class="share-stat-label">${L('statCount')}</span><span class="share-stat-value big">${stats.projectedCount.toLocaleString()}</span></div>
+          <div class="share-stat-row"><span class="share-stat-label">${L('statRemaining')}</span><span class="share-stat-value">${stats.remaining.toLocaleString()}</span></div>`;
+      } else if (stats && stats.kind === 'finish-boxes') {
+        statsRows = `
+          <div class="share-stat-row"><span class="share-stat-label">${L('statBoxesTotal')}</span><span class="share-stat-value">${stats.boxes.toLocaleString()}</span></div>
+          <div class="share-stat-row"><span class="share-stat-label">${L('statBoxesFilled')}</span><span class="share-stat-value big">${stats.boxesFilled.toLocaleString()}</span></div>
+          <div class="share-stat-row"><span class="share-stat-label">${L('statBoxesRemaining')}</span><span class="share-stat-value">${stats.boxesRemaining.toLocaleString()}</span></div>
+          <div class="share-stat-row"><span class="share-stat-label">${L('statPartsPerBox')}</span><span class="share-stat-value">${stats.partsPerBox.toLocaleString()}</span></div>`;
+      }
+
+      let paramsLine = '';
+      if (t.type) {
+        const parts = [];
+        if (t.cycleSec) parts.push(`${L('paramCycle')} ${t.cycleSec}${L('sec')}`);
+        if (t.pph)      parts.push(`${t.pph} ${L('paramPph')}`);
+        parts.push(`${t.cavities} ${L('cav')}`);
+        paramsLine = parts.join(' · ');
+      }
+
+      document.getElementById('share-card-content').innerHTML = `
+        <div class="share-corner-tag">${L('shareHeader')}</div>
+        ${press ? `<div class="share-press">${escapeHTML(press)}</div>` : ''}
+        <div class="share-op">${escapeHTML(opName || t.label)}${paused?` <span class="paused-badge">${L('pausedBadge')}</span>`:''}</div>
+        <div class="share-divider"></div>
+        <div class="share-countdown ${done?'done':''}">${cd}</div>
+        <div class="share-finish">${L('finish')}: ${finStr}</div>
+        ${statsRows ? `<div class="share-stats">${statsRows}</div>` : ''}
+        ${paramsLine ? `<div class="share-params">${paramsLine}</div>` : ''}
+        <div class="share-footer">
+          <span>${L('shareUpdated')} ${updated}</span>
+          <span>${L('shareApp')}</span>
+        </div>`;
+    }
+    // ── TOAST ──
+    let _tt;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.innerText = msg; el.classList.add('show');
+      clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('show'), 2400);
+    }
+
+    // ── KEYBOARD AWARENESS ──
+    window.addEventListener('resize', () => {
+      document.body.classList.toggle('keyboard-active', window.innerHeight < 550);
     });
+    document.addEventListener('keyup', e => { if (e.key==='Enter') document.activeElement?.blur(); });
+
+    // ── CLEAR ALL ──
+    function clearAll() {
+      document.querySelectorAll('input[type="number"]').forEach(i => i.value='');
+      cavs = {r:1,c:1,b:1};
+      document.querySelectorAll('.cav-grid').forEach(grid => {
+        grid.querySelectorAll('.cav-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.val === '1');
+        });
+      });
+      ['r','c','b'].forEach(p => document.getElementById(p+'-sticky').innerHTML='');
+      window.scrollTo({top:0,behavior:'smooth'}); saveAll();
+    }
+
+    // ── PERSISTENCE ──
+    function saveAll() {
+      try {
+        const inputs = {};
+        document.querySelectorAll('input').forEach(el => { inputs[el.id]=el.value; });
+        localStorage.setItem('pressCalcData', JSON.stringify({
+          lang:currentLang,
+          theme:document.body.getAttribute('data-theme'),
+          cavs, customCavs, inputs
+        }));
+      } catch(e){}
+    }
+
+    function loadAll() {
+      // Timers (separate key)
+      try { const raw=localStorage.getItem('pressCalcTimers'); savedTimers=raw?JSON.parse(raw):[]; } catch(e){ savedTimers=[]; }
+
+      const saved = localStorage.getItem('pressCalcData');
+      if (saved) {
+        try {
+          const d = JSON.parse(saved);
+          if (d.theme) {
+            document.body.setAttribute('data-theme', d.theme);
+            document.getElementById('theme-btn').innerText = d.theme==='dark'?'☀️':'🌙';
+          }
+          if (d.lang) currentLang = d.lang;
+          if (d.customCavs) customCavs = d.customCavs;
+          if (d.cavs) {
+            cavs = d.cavs;
+            ['r','c','b'].forEach(prefix => {
+              const grid = document.getElementById('grid-'+prefix);
+              if (!grid) return;
+              const customBtn = grid.querySelector('.cav-btn-custom');
+              // Restore custom button text/value if previously set
+              if (customBtn) {
+                if (customCavs[prefix]) {
+                  customBtn.innerText = customCavs[prefix];
+                  customBtn.dataset.val = customCavs[prefix];
+                  customBtn.classList.add('has-value');
+                } else {
+                  customBtn.innerText = '…';
+                  delete customBtn.dataset.val;
+                  customBtn.classList.remove('has-value');
+                }
+              }
+              // Mark active button by data-val match
+              grid.querySelectorAll('.cav-btn').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.val) === cavs[prefix]);
+              });
+            });
+          }
+          if (d.inputs) Object.entries(d.inputs).forEach(([id,val]) => {
+            const el=document.getElementById(id); if(el) el.value=val;
+          });
+        } catch(e){}
+      }
+
+      applyLang();
+      calcRate(); calcChange(); calcBox();
+      renderTimers(); updateBadge();
+    }
+
+    document.querySelectorAll('input').forEach(el => el.addEventListener('input', saveAll));
+    window.addEventListener('DOMContentLoaded', loadAll);
   </script>
 </body>
 </html>
